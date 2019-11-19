@@ -1,4 +1,4 @@
-(defproject    day8/lein-git-inject :lein-git-inject/version
+(defproject    day8/lein-git-inject "lein-git-inject/version"
   :description "Injects project.clj with some execution context."
   :url         "https://github.com/day8/lein-git-inject"
   :license     {:name "EPL-2.0 OR GPL-2.0-or-later WITH Classpath-exception-2.0"
@@ -8,7 +8,7 @@
 
   :dependencies [[me.arrdem/cuddlefish "0.1.0"]]
 
-  :plugins      [[day8/lein-git-inject "0.0.1"]]
+  :plugins      [[day8/lein-git-inject "0.0.2"]]
 
   :middleware   [leiningen.git-inject/middleware]
 

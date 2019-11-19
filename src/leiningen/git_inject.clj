@@ -40,8 +40,9 @@
   (let [config   (merge default-config git-inject)
         project' (walk/prewalk
                    (fn [x]
-                     (if-let [f (get x->f x)]
-                       (f config)
-                       x))
+                     (let [k (if (string? x) (keyword x) x)]
+                       (if-let [f (get x->f k)]
+                         (f config)
+                         x)))
                    project)]
     project'))
