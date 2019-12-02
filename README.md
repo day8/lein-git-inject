@@ -10,58 +10,49 @@
 
 A Leiningen middleware to inject `project.clj` with some execution context.
 
-Only a few useful known replacements are currently supported.
+The main use case is to inject a git tag-based version. The difference to other
+previous lein git plugins is the ability to replace values at any location such
+as in `:closure-defines` maps in heavily nested compiler configuration.
 
 ## Usage
 
-### Step 1. Add Plugin
-
-Add the following dependency into the `:plugins` vector of `project.clj`: <br>
-[![Clojars Project](https://img.shields.io/clojars/v/day8/lein-git-inject.svg)](https://clojars.org/day8/lein-git-inject)
-
-### Step 2. Add Middleware
-
-Add the following to the `:middleware` vector of `project.clj`: <br>
+Replaces any value, at any level of nesting, in `project.clj` with a supported
+string OR keyword such as `:lein-git-inject/version`.
 
 ```clojure
-:middleware [leiningen.git-inject/middleware]
-```
+(defproject    day8/lein-git-inject-example "lein-git-inject/version"
+  :description "An example."
+  :url         "https://github.com/day8/lein-git-inject"
+  :license     {:name "EPL-2.0"
+                :url "https://www.eclipse.org/legal/epl-2.0/"}
 
-### Step 3. Replace Values
+  :eval-in-leiningen true
 
-Replace any value, at any level of nesting, in `project.clj` with a supported
-keyword such as `:lein-git-inject/version`.
+  :dependencies [[me.arrdem/cuddlefish "0.1.0"]]
 
-#### Git-based version
+  :plugins      [[day8/lein-git-inject "0.0.2"]
+                 [lein-shadow          "0.1.7"]]
 
-```clojure
-:lein-git-inject/version
-;; ->
-"0.0.1"
-```
+  :middleware   [leiningen.git-inject/middleware]
 
-#### ISO-like datetime
+  :shadow-cljs {:builds {:app {:target :browser
+                               :release {:compiler-options {:closure-defines {;; "0.0.1"
+                                                                              day8.example.version         :lein-git-inject/version
+                                                                              ;; "2019-11-18T00:05:02.273361"
+                                                                              day8.example.build-date-time :lein-git-inject/build-iso-date-time
+                                                                              ;; "2019-W47-2"
+                                                                              day8.example.build-week-date :lein-git-inject/build-iso-date-week
+                                                                              ;; "isaac" i.e. the local shell username.
+                                                                              day8.example.username        :lein-git-inject/user-name}}}}}}
 
-```clojure
-:lein-git-inject/build-iso-date-time
-;; ->
-"2019-11-18T00:05:02.273361"
- ```
+  :release-tasks [["vcs" "assert-committed"]
+                  ["deploy" "clojars"]]
 
-#### ISO week-based date
+  :deploy-repositories [["clojars" {:sign-releases false
+                                    :url           "https://clojars.org/repo"
+                                    :username      :env/CLOJARS_USERNAME
+                                    :password      :env/CLOJARS_PASSWORD}]])
 
-```clojure
-:lein-git-inject/build-iso-week-date
-;; ->
-"2019-W47-2"
-```
-
-## Username
-
-```clojure
-:lein-git-inject/user-name
-;; ->
-"isaac"
 ```
 
 ## License
@@ -74,13 +65,4 @@ Derived from lein-git-version © 2016 Colin Steele
 
 Derived from lein-git-version © 2011 Michał Marczyk
 
-This program and the accompanying materials are made available under the
-terms of the Eclipse Public License 2.0 which is available at
-http://www.eclipse.org/legal/epl-2.0.
-
-This Source Code may also be made available under the following Secondary
-Licenses when the conditions for such availability set forth in the Eclipse
-Public License, v. 2.0 are satisfied: GNU General Public License as published by
-the Free Software Foundation, either version 2 of the License, or (at your
-option) any later version, with the GNU Classpath Exception which is available
-at https://www.gnu.org/software/classpath/license.html.
+Distributed under the Eclipse Public License, the same as Clojure.
