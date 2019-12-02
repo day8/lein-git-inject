@@ -1,7 +1,7 @@
 (defproject    day8/lein-git-inject "lein-git-inject/version"
   :description "Injects project.clj with some execution context."
   :url         "https://github.com/day8/lein-git-inject"
-  :license     {:name "EPL-2.0 OR GPL-2.0-or-later WITH Classpath-exception-2.0"
+  :license     {:name "EPL-2.0"
                 :url "https://www.eclipse.org/legal/epl-2.0/"}
 
   :eval-in-leiningen true
