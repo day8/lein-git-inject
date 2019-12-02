@@ -1,7 +1,8 @@
 (ns leiningen.git-inject
   (:require
     [clojure.walk :as walk]
-    [cuddlefish.core :as git])
+    [cuddlefish.core :as git]
+    [clojure.string :as string])
   (:import
     (java.time LocalDateTime)
     (java.time.format DateTimeFormatter)))
@@ -40,9 +41,23 @@
   (let [config   (merge default-config git-inject)
         project' (walk/prewalk
                    (fn [x]
-                     (let [k (if (string? x) (keyword x) x)]
-                       (if-let [f (get x->f k)]
-                         (f config)
-                         x)))
+                     (reduce-kv
+                       (fn [ret k f]
+                         (cond
+                           (keyword? x)
+                           (if (= x k)
+                             (f config)
+                             ret)
+
+                           (string? x)
+                           (let [s (str (namespace k) "/" (name k))]
+                             (if (string/includes? x s)
+                               (string/replace x (re-pattern s) (f config))
+                               ret))
+
+                           :default
+                           ret))
+                       x
+                       x->f))
                    project)]
     project'))
