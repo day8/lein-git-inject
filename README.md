@@ -27,18 +27,18 @@ a search and replace on this `edn`.  It searches for a small set of specific key
 (four of them) and, when it finds one of them, it replaces it with a value from the build context.
 
 The second step is to use `:clojure-defines` to push values within the `defproject` itself into 
-`def` within your applciation. 
+`def`s within your applciation. 
 
 ## How To Use It
 
-Here's how to use it in your `project.clj` to create the two steps ...
+Here's how to create and coordinate those two steps in your `project.clj` ...
 
 ```clojure
 
 ;; This note applies to the first line below.  
-;; Normally, a "key" like :lein-git-inject/version can be used in the edn 
-;; as either a string or a keyword, but in the case of the `defproject` version 
-;; you must use the string variant if you are using Cursive. It is a long story. 
+;; Normally, a "substitution key" like :lein-git-inject/version can be used in the edn 
+;; as either a string or a keyword, but with the `defproject` version 
+;; you must use the string variant, if you are using Cursive. It is a long story. 
 
 (defproject day8/lein-git-inject-example "lein-git-inject/version"
 
@@ -54,7 +54,7 @@ Here's how to use it in your `project.clj` to create the two steps ...
   ;; combine this middleware with a `:clojure-define` in order to 
   ;; inject an ambient build value into a def within your application.
   ;; 
-  ;; First, notice the use of ":lein-git-inject/version".  
+  ;; First, notice the use of the substitution key ":lein-git-inject/version".  
   ;; At build time, that will be replaced with the value for git tag. 
   ;; In turn, that value is used within a `:clojure-define`
   ;; to place it into a def (called "version" within the namespace "some.namespace"). 
@@ -70,9 +70,9 @@ Here's how to use it in your `project.clj` to create the two steps ...
 
 ## Substitutaions 
 
-This middleware performs search and replace on four keys within `defproject` edn. 
+This middleware performs search and replace on four `substitution keys` within `defproject` edn. 
 
-|         key                          |    example replacement |
+|   substituion key                    |    example replacement |
 |--------------------------------------|-----------------------------|
 | :lein-git-inject/version             |  "0.0.1"
 | :lein-git-inject/build-iso-date-time |  "2019-11-18T00:05:02.273361"  |      
