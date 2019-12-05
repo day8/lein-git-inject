@@ -8,40 +8,37 @@
 
 # lein-git-inject
 
-This Leiningen middleware allows you to embed "build context values" into your ClojureScript application. 
+This Leiningen middleware allows you to embed certain values into your ClojureScript application which are ambient to the built process. 
 
-Your application can contain one or more `def`s which hold these values, like: 
-   - the `git tag` for the build  (kind of the equivalent of what would be returned by `git describe --tags --dirty --long`)
+So, your application can contain one or more `def`s and they can be made to hold values known (only) at build time, like: 
+   - the `git tag` for the source code being used to build the app (the equivalent to what would be returned by `git describe --tags --dirty --long`)
    - the build date/time
-   - the user who did the build
+   - the user doing the build
 
-So, you can "inject" values into your built application/library, and those values can then be used for purposes like logging. 
+So, you can "inject" these values into your built application/library, and then use those values for purposes like logging. 
 
 ## How It works
 
-This Leiningen middleware processes the `edn` within your `defproject` which is, of course, 
+The magic happens in two steps and this middleware handles the first. 
+
+It processes the `edn` within your `defproject` which is, of course, itself
 within your `project.clj` file.  This middleware effectively does
-a search and replace on this `edn`.  It searches for a small set of specific strings or 
-keyworks (four of them) and, when it finds one of them, it replaces it with a value from the build context.
+a search and replace on this `edn`.  It searches for a small set of specific keywords or strings
+(four of them) and, when it finds one of them, it replaces it with a value from the build context.
 
-In that way, you can inject build information into your `defproject` and that, in turn, means this
-information can be embedded/injected into the built application as `defs` via the use of 
-`:clojure-defines`. 
-
-So the magic happens in two steps and this middleware handles the first step. 
-
-The primary use case here is to embed/inject the build's associate git tag as the application version. 
+The second step is to use `:clojure-defines` to push values within the `defproject` itself into 
+`def` within your applciation. 
 
 ## How To Use It
 
-Here's how to use it in your `project.clj` ...
+Here's how to use it in your `project.clj` to create the two steps ...
 
 ```clojure
 
-;; This note applies to the first line below.  Normally a "keys" like 
-;; :lein-git-inject/version can be used in the edn has either a string
-;; or a keyword, but in the case of the defproject version 
-;; you must use the string varient if you are using Cursive. A special case. 
+;; This note applies to the first line below.  
+;; Normally, a "key" like :lein-git-inject/version can be used in the edn 
+;; has either a string or a keyword, but in the case of the `defproject` version 
+;; you must use the string varient if you are using Cursive. It is a long story. 
 
 (defproject day8/lein-git-inject-example "lein-git-inject/version"
 
@@ -54,19 +51,19 @@ Here's how to use it in your `project.clj` ...
   
   
   ;; Assuming you are using the shadow-clj compiler, below is an example of how to 
-  ;; combine this middleware with a :clojure-define in order to 
-  ;; inject an aspect of the build context into a def within your application.
+  ;; combine this middleware with a `:clojure-define` in order to 
+  ;; inject an ambient build value into a def within your application.
   ;; 
   ;; First, notice the use of ":lein-git-inject/version".  
   ;; At build time, that will be replaced with the value for git tag. 
-  ;; In turn, that value will be used within a :clojure-define
-  ;; to place it into a def (called "version") within the namespace "some.namespace". 
+  ;; In turn, that value is used within a `:clojure-define`
+  ;; to place it into a def (called "version" within the namespace "some.namespace"). 
   :shadow-cljs {:builds {:app {:target :browser
                                :release {:compiler-options {:closure-defines {some.namespace.version  :lein-git-inject/version}}}}}}
 
-  ;; Note: by default lien will change versions in project.clj when releasing 
-  ;; To avoid this (because version will now come from git tag), explicitly include
-  ;; these steps to avoid using the default process provided by lein. 
+  ;; Note: by default, lien will change version in project.clj when doing a `lien release`. 
+  ;; To avoid this (because the version will now come from the git tag), explicitly include
+  ;; these steps to avoid using the default release process provided by lein. 
   :release-tasks [["vcs" "assert-committed"]
                   ["deploy"]])
 ```
@@ -85,7 +82,7 @@ This middleware supports replacement of four keys:
 
 ## License
 
-Copyright © 2019 Day8 Technology Pty Ltd 
+Copyright © 2019 Mike Thompson
 
 Derived from lein-git-version © 2017 Reid "arrdem" McKenzie
 
