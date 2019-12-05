@@ -19,7 +19,7 @@ So, you can "inject" these values into your built application/library, *_and the
 
 ## How It works
 
-The magic happens in two steps and this middleware handles the first. 
+The magic happens in two steps and this middleware handles the first of them. 
 
 It processes the `edn` within your `defproject` which is, of course, itself
 within your `project.clj` file.  This middleware effectively does
