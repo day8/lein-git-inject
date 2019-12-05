@@ -37,8 +37,8 @@ Here's how to use it in your `project.clj` to create the two steps ...
 
 ;; This note applies to the first line below.  
 ;; Normally, a "key" like :lein-git-inject/version can be used in the edn 
-;; has either a string or a keyword, but in the case of the `defproject` version 
-;; you must use the string varient if you are using Cursive. It is a long story. 
+;; as either a string or a keyword, but in the case of the `defproject` version 
+;; you must use the string variant if you are using Cursive. It is a long story. 
 
 (defproject day8/lein-git-inject-example "lein-git-inject/version"
 
@@ -70,7 +70,7 @@ Here's how to use it in your `project.clj` to create the two steps ...
 
 ## Substitutaions 
 
-This middleware supports replacement of four keys:
+This middleware performs search and replace on four keys within `defproject` edn. 
 
 |         key                          |    example replacement |
 |--------------------------------------|-----------------------------|
@@ -78,7 +78,8 @@ This middleware supports replacement of four keys:
 | :lein-git-inject/build-iso-date-time |  "2019-11-18T00:05:02.273361"  |      
 | :lein-git-inject/build-iso-date-week |  "2019-W47-2"
 | :lein-git-inject/user-name           | "Isaac"    |
-
+ 
+Replacement will happen for both the keyword version of these keys and the string form. 
 
 ## License
 
