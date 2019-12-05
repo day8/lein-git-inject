@@ -61,16 +61,17 @@ Here's how to create and coordinate those two steps in your `project.clj` ...
   :shadow-cljs {:builds {:app {:target :browser
                                :release {:compiler-options {:closure-defines {some.namespace.version  :lein-git-inject/version}}}}}}
 
-  ;; Note: by default, lien will change version in project.clj when doing a `lien release`. 
-  ;; To avoid this (because the version will now come from the git tag), explicitly include
-  ;; these steps to avoid using the default release process provided by lein. 
+  ;; Note: by default, lein will change version in project.clj when you do a `lein release`. 
+  ;; To avoid this (because you now want the version to come from the git tag), explicitly include
+  ;; the following steps to avoid using the default release process provided by lein. 
   :release-tasks [["vcs" "assert-committed"]
                   ["deploy"]])
 ```
 
-## Substitutaions 
+## The Four Substitution Keys 
 
-This middleware performs search and replace on four `substitution keys` within `defproject` edn. 
+This middleware performs search and replace on four `substitution keys` within `defproject` 
+edn. It will serarch for these values as keywords or strings. 
 
 |   substituion key                    |    example replacement |
 |--------------------------------------|-----------------------------|
@@ -79,7 +80,6 @@ This middleware performs search and replace on four `substitution keys` within `
 | :lein-git-inject/build-iso-date-week |  "2019-W47-2"
 | :lein-git-inject/user-name           | "Isaac"    |
  
-Replacement will happen for both the keyword version of these keys and the string form. 
 
 ## License
 
