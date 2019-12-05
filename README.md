@@ -24,7 +24,7 @@ The process happens in two steps and this middleware handles the first of them.
 It processes the `edn` within your `defproject` which is, of course, itself
 within your `project.clj` file.  This middleware effectively does
 a search and replace on this `edn`.  It searches for a small set of specific keywords or strings
-(four of them) and, when it finds one of them, it replaces it with a value from the build context.
+(four of them) and, when it finds one of them, it replaces it with the associated value from the build context.
 
 The second step is to use `:clojure-defines` to push values within the `defproject` itself into 
 `def`s within your applciation. 
