@@ -8,37 +8,42 @@
 
 # lein-git-inject
 
-This Leiningen middleware facilitates automatically embedding certain values in your ClojureScript application - interesting values which were ambient at the time it was built.
+This Leiningen middleware allows you to automatically embed certain values in your ClojureScript application - interesting values which were ambient at build-time. 
 
 Your application will contain one or more `def`s and they will be bound to build-time values such as:  
    - the `git tag` for the source code being used to build the app (the equivalent to what would be returned by `git describe --tags --dirty --long`)
    - the build date/time
    - the user doing the build
 
-You can then _use these values for purposes like logging_*. 
+You can then *_use these values for purposes like logging_*. 
 
 ## How It works
 
-The process happens in two steps and this middleware handles the first of them. 
+The process has two steps and this middleware handles the first of them. 
 
-It processes the `edn` within your `defproject` which is, of course, itself
-within your `project.clj` file.  This middleware effectively does
-a search and replace on this `edn`.  It searches for a small set of specific keywords or strings
-(four of them) and, when it finds one of them, it replaces it with the associated value from the build context.
+Because it is a Leiningen middleware, this utility runs at buil-time, and it 
+is able to alter the `edn` of your `defproject` (within your `project.clj` file).  
+It does a particular search and replace on this `edn`.  It searches for
+four special keywords or strings - refered to as substitution keys - 
+and, when it finds one of them, it replaces that key with the associated 
+value from the build context.
 
-The second step is to use `:clojure-defines` to push values within the `defproject` itself into 
-`def`s within your applciation. 
+The second step is to use `:clojure-defines` to push values within the 
+`defproject` itself into `def`s within your applciation. 
 
 ## How To Use It
 
-Here's how to create and coordinate those two steps in your `project.clj` ...
+Here's how to coordinate those two steps in your `project.clj` ...
 
 ```clojure
 
 ;; This note applies to the first line below.  
-;; Normally, a "substitution key" like :lein-git-inject/version can be used in the edn 
-;; as either a string or a keyword, but with the `defproject` version 
-;; you must use the string variant, if you are using Cursive. It is a long story. 
+;; Normally, a "substitution key" like :lein-git-inject/version can be 
+;; used within the edn in either its string-form or aa a keyword, either way is fine. 
+;; But within the `defproject` "version" you must use the string variant, 
+;; IF YOU ARE USING CURSIVE, because Cursive does some inspection
+;; of your project.clj ahead of any lein use - and it doesn't like to 
+;; to see a keyword where a string is expected, in this one case.
 
 (defproject day8/lein-git-inject-example "lein-git-inject/version"
 
@@ -54,9 +59,10 @@ Here's how to create and coordinate those two steps in your `project.clj` ...
   ;; combine this middleware with a `:clojure-define` in order to 
   ;; inject an ambient build value into a def within your application.
   ;; 
-  ;; First, notice the use of the substitution key ":lein-git-inject/version".  
-  ;; At build time, that will be replaced with the value for git tag. 
-  ;; In turn, that value is used within a `:clojure-define`
+  ;; You'll notice the use of the substitution key ":lein-git-inject/version".  
+  ;; At build time, this middleware will replaced that keyword with the value for 
+  ;; the current git tag. 
+  ;; In turn, that value is used within a `:clojure-define` 
   ;; to place it into a def (called "version" within the namespace "some.namespace"). 
   :shadow-cljs {:builds {:app {:target :browser
                                :release {:compiler-options {:closure-defines {some.namespace.version  :lein-git-inject/version}}}}}}
