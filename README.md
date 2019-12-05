@@ -8,18 +8,18 @@
 
 # lein-git-inject
 
-This Leiningen middleware facilitates embedding certain values in your ClojureScript application which were ambient at the time it was built.
+This Leiningen middleware facilitates automatically embedding certain values in your ClojureScript application - interesting values which were ambient at the time it was built.
 
-So, your application can contain one or more `def`s and they can be made to hold values known (only) at build time, like: 
+Your application will contain one or more `def`s and they will be bound to build-time values such as:  
    - the `git tag` for the source code being used to build the app (the equivalent to what would be returned by `git describe --tags --dirty --long`)
    - the build date/time
    - the user doing the build
 
-So, you can "inject" these values into your built application/library, *_and then use those values for purposes like logging_*. 
+You can then _use these values for purposes like logging_*. 
 
 ## How It works
 
-The magic happens in two steps and this middleware handles the first of them. 
+The process happens in two steps and this middleware handles the first of them. 
 
 It processes the `edn` within your `defproject` which is, of course, itself
 within your `project.clj` file.  This middleware effectively does
