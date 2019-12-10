@@ -8,7 +8,7 @@
 
   :dependencies [[me.arrdem/cuddlefish "0.1.0"]]
 
-  :plugins      [[day8/lein-git-inject "0.0.2"]]
+  :plugins      [[day8/lein-git-inject "0.0.4"]]
 
   :middleware   [leiningen.git-inject/middleware]
 
