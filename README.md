@@ -55,7 +55,8 @@ Here's how to coordinate those two steps in your `project.clj` ...
   :middleware   [leiningen.git-inject/middleware]  ;; <-- you must include this middleware
   
   
-  ;; Assuming you are using the shadow-clj compiler, below is an example of how to 
+  ;; Assuming you are using the shadow-clj compiler and lein-shadow so that the
+  ;; shadow-cljs configuration is in project.clj, below is an example of how to 
   ;; combine this middleware with a `:clojure-define` in order to 
   ;; inject an ambient build value into a def within your application.
   ;; 
