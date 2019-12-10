@@ -74,9 +74,23 @@ Here's how to coordinate those two steps in your `project.clj` ...
   :release-tasks [["vcs" "assert-committed"]
                   ["deploy"]]
 
-  ;; Optional: if git is not in your path or you want to explicitly refer to a
-  ;; certain version of git. You may configure it like this:
-  :git-inject {:git "/usr/local/bin/my-special-git-binary"})
+  ;; Optional configuration:
+  :git-inject {
+    ;; Optional: you may choose to ignore ahead or dirty state like this:
+    :ignore-ahead?            true
+    :ignore-dirty?            true
+
+    ;; Optional: you may customize the patterns used to extract versions from
+    ;; tags like below. Note only ahead (or ignore-ahead?) and dirty
+    ;; (or ignore-dirty?) state is used to choose between release or snapshot
+    ;; versions. The below patterns simply extract values from the tag to be
+    ;; injected.
+    :release-version-pattern  #"v?(.*)"
+    :snapshot-version-pattern #"v?(\d+)\.(\d+)\.(\d+)(-.+)?"
+
+    ;; Optional: if git is not in your path or you want to explicitly refer to a
+    ;; certain version of git. You may configure it like this:
+    :git                      "/usr/local/bin/my-special-git-binary"})
 ```
 
 ## The Four Substitution Keys 
@@ -90,7 +104,10 @@ edn. It will search for these values as keywords or strings.
 | :lein-git-inject/build-iso-date-time |  "2019-11-18T00:05:02.273361"  |      
 | :lein-git-inject/build-iso-date-week |  "2019-W47-2"
 | :lein-git-inject/user-name           | "Isaac"    |
+
  
+ To debug you may use `lein pprint` to see the the entire project map after
+ injection has taken place.
 
 ## License
 
