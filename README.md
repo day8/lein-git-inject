@@ -72,7 +72,11 @@ Here's how to coordinate those two steps in your `project.clj` ...
   ;; To avoid this (because you now want the version to come from the git tag), explicitly include
   ;; the following steps to avoid using the default release process provided by lein. 
   :release-tasks [["vcs" "assert-committed"]
-                  ["deploy"]])
+                  ["deploy"]]
+
+  ;; Optional: if git is not in your path or you want to explicitly refer to a
+  ;; certain version of git. You may configure it like this:
+  :git-inject {:git "/usr/local/bin/my-special-git-binary"})
 ```
 
 ## The Four Substitution Keys 
