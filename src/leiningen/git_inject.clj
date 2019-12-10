@@ -4,30 +4,49 @@
     [cuddlefish.core :as git]
     [clojure.string :as string])
   (:import
+    (java.io IOException)
     (java.time LocalDateTime)
     (java.time.format DateTimeFormatter)))
 
 (def default-config
   "The default configuration values."
-  {:git              "git"
-   :describe-pattern git/git-describe-pattern})
+  {:git                      "git"
+   :describe-pattern         git/git-describe-pattern
+   :ignore-ahead?            false
+   :ignore-dirty?            false
+   :release-version-pattern  #"v?(.*)"
+   :snapshot-version-pattern #"v?(\d+)\.(\d+)\.(\d+)(-.+)?"})
 
 (defn git-status-to-version
-  [config]
-  (let [{:keys [tag ahead ahead? dirty?]} (git/status config)]
-    (if-not (string? tag)
-      ;; If git status is nil (e.g. IntelliJ reading project.clj) then return...
-      "git-tag-unavailable"
-      (if (and (not ahead?) (not dirty?))
-        (let [[_ version] (re-find #"v?(.*)" tag)]
-          version)
-        (let [[_ major minor patch suffix] (re-find #"v?(\d+)\.(\d+)\.(\d+)(-.+)?" tag)]
-          (if (nil? major)
-            ;; If tag is poorly formatted then return...
-            "git-tag-invalid"
-            (let [patch' (try (Long/parseLong patch) (catch Throwable _ 0))
-                  patch+ (inc patch')]
-              (str major "." minor "." patch+ suffix "-" ahead "-SNAPSHOT"))))))))
+  [{:keys [ignore-ahead? ignore-dirty? release-version-pattern snapshot-version-pattern] :as config}]
+  (try
+    (let [{:keys [tag ahead ahead? dirty?]} (git/status (select-keys config [:git :describe-pattern]))]
+      (if-not (string? tag)
+        ;; If git status is nil (e.g. IntelliJ evaluating project.clj):
+        "git-tag-unavailable"
+        (if (and (or ignore-ahead? (not ahead?))
+                 (or ignore-dirty? (not dirty?)))
+          ;; If this is a release version:
+          (let [[_ release-version] (re-find release-version-pattern tag)]
+            (if (nil? release-version)
+              ;; If tag is poorly formatted:
+              "git-tag-invalid"
+              ;; Otherwise we have a good release version:
+              release-version))
+          ;; Otherwise this is a snapshot version:
+          (let [[_ major minor patch suffix] (re-find snapshot-version-pattern tag)]
+            (if (nil? major)
+              ;; If tag is poorly formatted:
+              "git-tag-invalid"
+              (let [patch' (try (Long/parseLong patch) (catch Throwable _ 0))
+                    patch+ (inc patch')]
+                ;; Otherwise we have a good snapshot version:
+                (str major "." minor "." patch+ suffix
+                     (when-not ignore-ahead? (str "-" ahead))
+                     "-SNAPSHOT")))))))
+    (catch IOException _
+      ;; If git binary is not available (e.g. not in path):
+      "git-unavailable")))
 
 (def x->f
   {:lein-git-inject/build-iso-date-time (fn [_] (.format (LocalDateTime/now) DateTimeFormatter/ISO_DATE_TIME))
