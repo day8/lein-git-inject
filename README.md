@@ -39,11 +39,11 @@ Here's how to coordinate those two steps in your `project.clj` ...
 
 ;; This note applies to the first line below.  
 ;; Normally, a "substitution key" like :lein-git-inject/version can be 
-;; used within the edn in either its string-form or aa a keyword, either way is fine. 
+;; used within the edn in either its string-form or as a keyword, either way is fine. 
 ;; But within the `defproject` "version" you must use the string variant, 
 ;; IF YOU ARE USING CURSIVE, because Cursive does some inspection
 ;; of your project.clj ahead of any lein use - and it doesn't like to 
-;; to see a keyword where a string is expected, in this one case.
+;; see a keyword where a string is expected, in this one case.
 
 (defproject day8/lein-git-inject-example "lein-git-inject/version"
 
