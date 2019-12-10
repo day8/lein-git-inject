@@ -8,21 +8,21 @@
 
 # lein-git-inject
 
-This Leiningen middleware allows you to automatically embed certain values in your ClojureScript application - interesting values which were ambient at build-time. 
+This Leiningen middleware allows you to automatically embed certain values in your ClojureScript application - interesting values which are ambient at build-time.
 
 Your application will contain one or more `def`s and they will be bound to build-time values such as:  
    - the `git tag` for the source code being used to build the app (the equivalent to what would be returned by `git describe --tags --dirty --long`)
    - the build date/time
    - the user doing the build
 
-You can then *_use these values for purposes like logging_*. 
+You can then ***use these values for purposes like logging***.
 
 ## How It works
 
 The process has two steps, and this middleware handles the first of them. 
 
 Because it is a Leiningen middleware, this utility runs at build-time, and it 
-is able to alter the `edn` of your `defproject` (within your `project.clj` file).  
+is able to alter the `edn` of your `defproject` (within your `project.clj` file).
 It does a particular search and replace on this `edn`.  It searches for
 four special keywords or strings - referred to as substitution keys - 
 and, when it finds one of them, it replaces that key with the associated 
@@ -31,9 +31,24 @@ value from the build context.
 The second step is to use `:clojure-defines` to push values within the 
 `defproject` itself into `def`s within your application. 
 
+
+## The Four Substitution Keys 
+
+This middleware performs search and replace on four `substitution keys` within `defproject` 
+edn. It will search for these values as keywords or strings.  To debug you may use `lein pprint` 
+to see the the entire project map after injection has taken place.
+
+
+|   substituion key                    |    example replacement |
+|--------------------------------------|-----------------------------|
+| :lein-git-inject/version             |  "0.0.1"
+| :lein-git-inject/build-iso-date-time |  "2019-11-18T00:05:02.273361"  |      
+| :lein-git-inject/build-iso-date-week |  "2019-W47-2"
+| :lein-git-inject/user-name           | "Isaac"    |
+ 
 ## How To Use It
 
-Here's how to coordinate those two steps in your `project.clj` ...
+Here's how to coordinate the two steps in your `project.clj` ...
 
 ```clojure
 
@@ -93,21 +108,6 @@ Here's how to coordinate those two steps in your `project.clj` ...
     :git                      "/usr/local/bin/my-special-git-binary"})
 ```
 
-## The Four Substitution Keys 
-
-This middleware performs search and replace on four `substitution keys` within `defproject` 
-edn. It will search for these values as keywords or strings. 
-
-|   substituion key                    |    example replacement |
-|--------------------------------------|-----------------------------|
-| :lein-git-inject/version             |  "0.0.1"
-| :lein-git-inject/build-iso-date-time |  "2019-11-18T00:05:02.273361"  |      
-| :lein-git-inject/build-iso-date-week |  "2019-W47-2"
-| :lein-git-inject/user-name           | "Isaac"    |
-
- 
- To debug you may use `lein pprint` to see the the entire project map after
- injection has taken place.
 
 ## License
 
