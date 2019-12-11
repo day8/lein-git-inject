@@ -39,12 +39,12 @@ edn. It will search for these values as keywords or strings.  To debug you may u
 to see the the entire project map after injection has taken place.
 
 
-|   substituion key                    |    example replacement |
+|   substituion key                    |    example replacement      |
 |--------------------------------------|-----------------------------|
-| :lein-git-inject/version             |  "0.0.1"
+| :lein-git-inject/version             |  "0.0.1"                    |
 | :lein-git-inject/build-iso-date-time |  "2019-11-18T00:05:02.273361"  |      
-| :lein-git-inject/build-iso-date-week |  "2019-W47-2"
-| :lein-git-inject/user-name           | "Isaac"    |
+| :lein-git-inject/build-iso-date-week |  "2019-W47-2"               |
+| :lein-git-inject/user-name           | "Isaac"                     |
  
 ## How To Use It
 
@@ -91,7 +91,7 @@ Here's how to coordinate the two steps in your `project.clj` ...
 
   ;; Optional configuration:
   :git-inject {
-    ;; Optional: you may choose to ignore ahead or dirty state like this:
+    ;; choose to ignore ahead or dirty state like this:
     :ignore-ahead?            true
     :ignore-dirty?            true
 
@@ -103,9 +103,9 @@ Here's how to coordinate the two steps in your `project.clj` ...
     :release-version-pattern  #"v?(.*)"
     :snapshot-version-pattern #"v?(\d+)\.(\d+)\.(\d+)(-.+)?"
 
-    ;; Optional: if git is not in your path or you want to explicitly refer to a
-    ;; certain version of git. You may configure it like this:
-    :git                      "/usr/local/bin/my-special-git-binary"})
+    :git-describe->version [ {#"v([0-9]*.[0-9]*.[0-9])-[1-9][0-9]+.*"   #""}
+                  ]
+    })
 ```
 
 
