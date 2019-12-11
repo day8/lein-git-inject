@@ -8,7 +8,7 @@
 
 # lein-git-inject
 
-This Leiningen middleware allows you to automatically embed certain values in your ClojureScript application - interesting values which are ambient at build-time.
+This Leiningen middleware allows you to automatically embed, into your ClojureScript application, certain values which are ambient at build-time. 
 
 Your application will contain one or more `def`s and they will be bound to build-time values such as:  
    - the `git tag` for the source code being used to build the app (the equivalent to what would be returned by `git describe --tags --dirty --long`)
@@ -21,14 +21,14 @@ You can then ***use these values for purposes like logging***.
 
 The process has two steps, and this middleware handles the first of them. 
 
-Because it is a Leiningen middleware, this utility runs at build-time, and it 
+***First***, because it is a Leiningen middleware, this utility runs at build-time, and it 
 is able to alter the `edn` of your `defproject` (within your `project.clj` file).
 It does a particular search and replace on this `edn`.  It searches for
 four special keywords or strings - referred to as substitution keys - 
 and, when it finds one of them, it replaces that key with the associated 
 value from the build context.
 
-The second step is to use `:clojure-defines` to push values within the 
+***Second***, use `:clojure-defines` to push values within the 
 `defproject` itself into `def`s within your application. 
 
 
