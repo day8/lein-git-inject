@@ -8,7 +8,11 @@
 
 # lein-git-inject
 
-This Leiningen middleware allows you to automatically embed, into your ClojureScript application, certain values which are ambient at build-time. 
+This Leiningen middleware allows you to:
+   1. derive an application's `version` from the ambient git tags/status at build time.
+   2. alter the lein `defproject` to use this derived `version`
+   3. embed this `version` within your ClojureScript application for purposes like logging. 
+   4. As a small bonus, it also allows you to embed, into your ClojureScript application, certain other values which are ambient at build-time. 
 
 Your application will contain one or more `def`s and they will be bound to build-time values such as:  
    - the `git tag` for the source code being used to build the app (the equivalent to what would be returned by `git describe --tags --dirty --long`)
@@ -19,16 +23,20 @@ You can then ***use these values for purposes like logging***.
 
 ## How It works
 
-The process has two steps, and this middleware handles the first of them. 
+The entire process has three steps, and this middleware handles the first two of them. 
 
-***First***, because it is a Leiningen middleware, this utility runs at build-time, and it 
-is able to alter the `edn` of your `defproject` (within your `project.clj` file).
+Note: because it is a Leiningen middleware, this utility runs at build-time. 
+
+***First***, it will derive a `version` for the application from the ambient git context, including the latest git tag, dirty flags, and whether it is dirty. 
+
+***Second***, this Leiningen middleware runs at build-time and it 
+can alter the `edn` of your `defproject` (within your `project.clj` file).
 It does a particular search and replace on this `edn`.  It searches for
-four special keywords or strings - referred to as substitution keys - 
+four special keywords or strings - referred to as `substitution keys` - 
 and, when it finds one of them, it replaces that key with the associated 
 value from the build context.
 
-***Second***, use `:clojure-defines` to push values within the 
+***Second***, use `:clojure-defines` to push/embed values within the 
 `defproject` itself into `def`s within your application. 
 
 
