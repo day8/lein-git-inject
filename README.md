@@ -25,19 +25,21 @@ You can then ***use these values for purposes like logging***.
 
 The entire process has three steps, and this middleware handles the first two of them. 
 
-Note: because it is a Leiningen middleware, this utility runs at build-time. 
+As you read these three steps, please keep in minid that Leiningen middleware runs 
+very early in the Lein build pipeline. So early, in fact, that it can alter the `edn` 
+of your `defproject` (within your `project.clj` file).
 
-***First***, it will derive a `version` for the application from the ambient git context, including the latest git tag, dirty flags, and whether it is dirty. 
+***First***, it will derive a `version` value for the application from the ambient git context, including the latest git tag, dirty flags, and whether it is dirty. XXX
 
-***Second***, this Leiningen middleware runs at build-time and it 
-can alter the `edn` of your `defproject` (within your `project.clj` file).
-It does a particular search and replace on this `edn`.  It searches for
+***Second***, it does a particular search and replace on the `edn` of 
+your `defproject`.  It searches for
 four special keywords or strings - referred to as `substitution keys` - 
 and, when it finds one of them, it replaces that key with the associated 
-value from the build context.
+value from the build context.  In particular, it replaces any occurance of the 
+substitution key `:lein-git-inject/version` with the `version` derived in step 1.
 
-***Second***, use `:clojure-defines` to push/embed values within the 
-`defproject` itself into `def`s within your application. 
+***Third***, `:clojure-defines` can be used to push/embed values within the 
+`defproject` itself into `def`s within your application.
 
 
 ## The Four Substitution Keys 
@@ -56,7 +58,7 @@ to see the the entire project map after injection has taken place.
  
 ## How To Use It
 
-Here's how to coordinate the two steps in your `project.clj` ...
+Here's how to coordinate the three steps in your `project.clj` ...
 
 ```clojure
 
@@ -92,8 +94,8 @@ Here's how to coordinate the two steps in your `project.clj` ...
                                :release {:compiler-options {:closure-defines {some.namespace.version  :lein-git-inject/version}}}}}}
 
   ;; Note: by default, lein will change the version in project.clj when you do a `lein release`. 
-  ;; To avoid this (because you now want the version to come from the git tag), explicitly include
-  ;; the following steps to avoid using the default release process provided by lein. 
+  ;; To avoid this (because you now want the version to come from the git context at build time), 
+  ;; explicitly include the following steps to avoid using the default release process provided by lein. 
   :release-tasks [["vcs" "assert-committed"]
                   ["deploy"]]
 
