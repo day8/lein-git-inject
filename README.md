@@ -149,6 +149,11 @@ Here's how your `project.clj` should be arranged to achive the three steps descr
     })
 ```
 
+## More Explanation 
+
+XXX explain how a tag is not considered a version tag unless it matches the regex
+
+XXX explain how you should add triggers to ensure that tags are of the right format. 
 
 ## License
 
