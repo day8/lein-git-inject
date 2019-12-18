@@ -21,7 +21,7 @@ This Leiningen middleware allows you to:
    3. optionally, embed this `version` value within your ClojureScript application for purposes like logging 
    4. optionally, embed certain other ambient build-time values (like a timestamp) into your ClojureScript application
 
-Regarding points 3 and 4, your application will contain one or more `def`s and they will be bound to the build-time values. You can then ***use these values for purposes like logging***.
+Regarding points 3 and 4, your application will contain one or more `def`s and they will be bound to the build-time values.
 
 ## A Git Backgrounder 
 
