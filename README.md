@@ -16,8 +16,8 @@ looking in the `project.clj` and locating the 2nd argument of `defproject`:
 ```
 
 This Leiningen middleware allows you to:
-   1. derive the `version` from the ambient ***git context*** at ***build time*** (and, specifically, the latest git tag)
-   2. alter the lein `defproject` to use this derived `version` in the build process
+   1. construct the `version` from ***the ambient git context*** at ***build time*** (and, specifically, from the latest git tag)
+   2. alter the lein `defproject` to use this constructed `version` in the build process
    3. optionally, embed this `version` value within your ClojureScript application for purposes like logging 
    4. optionally, embed certain other ambient build-time values (like a timestamp) into your ClojureScript application
 
@@ -31,25 +31,25 @@ $ git describe --tags --dirty=-dirty
 ```
 you will see a string response like:
 ```sh
-v1.0.4-14-g975b-dirty
+v1.0.4-3-g975b-dirty
 ```
-and this string encodes four (hyphen separated) pieces of information which we'll refer to as "the git context":
+and this string encodes four (hyphen separated) pieces of information which we refer to as "the ambient git context":
   - the latest tag: "v1.0.4"
-  - the number of commits you are "ahead" of that latest tag: "14" 
+  - the number of commits you are "ahead" of that latest tag: "3" 
   - the SHA for the commit referenced by that latest tag: "g975b"
-  - an indication that there are uncommitted changes: "dirty"  (or blank)
+  - an indication that there are uncommitted changes: "dirty"  (or absent)
   
-This utility will derive a `version` from these four values (at build time) - the  
-version will be based off git tagging.
+This utility will construct a `version` from these four values (at build time) - allowing this
+"version" to be based off the latest git tag.
 
-Often the situation is very simple, and the tag itself is the version - end of story. 
-But, if the developer has a git context in which they are "ahead" of
-the tag (they have commits after the tag was done), then the version should have `-SNAPSHOT` 
+Very often the situation is simple, and the tag itself is the version - not much construction to be done - end of story. 
+But, in a development context, you may have a git context in which you are "ahead" of
+the latest tag (you have made commits after the tag), and then the version should have `-SNAPSHOT` 
 added. And, sometimes, in certain continuous delivery environments, it is okay for the
-dirty flag to be true, providing the "ahead" count is zero.  Etc.  There are a couple of rules 
-to drive this. 
+dirty flag to be true, providing the "ahead" count is zero.  Etc.  There are a few rules 
+to drive the "construction" of the version from the ambient git context. 
 
-## How It works
+## How It Works
 
 The entire process has three steps, and this middleware handles the first two of them. 
 
@@ -57,7 +57,7 @@ As you read these three steps, please keep in mind that Leiningen middleware run
 very early in the Lein build pipeline. So early, in fact, that it can alter the `EDN` 
 of your `defproject` (within your `project.clj` file).
 
-***First***, it will derive a `version` value from the ambient git context
+***First***, it will construct a `version` value from the ambient git context
 
 ***Second***, it will preform a search and replace on the `EDN` in 
 the `defproject`.  It searches for
