@@ -39,15 +39,10 @@ and this string encodes four (hyphen separated) pieces of information which we r
   - the SHA for the commit referenced by that latest tag: "g975b"
   - an indication that there are uncommitted changes: "dirty"  (or absent)
   
-This utility will construct a `version` from these four values (at build time) - allowing this
-"version" to be based off the latest git tag.
-
-Very often the situation is simple, and the tag itself is the version - not much construction to be done - end of story. 
-But, in a development context, you may have a git context in which you are "ahead" of
-the latest tag (you have made commits after the tag), and then the version should have `-SNAPSHOT` 
-added. And, sometimes, in certain continuous delivery environments, it is okay for the
-dirty flag to be true, providing the "ahead" count is zero.  Etc.  There are a few rules 
-to drive the "construction" of the version from the ambient git context. 
+This utility will construct a `version` from these four values, at build time, using a series of rules:
+  - when the "ahead" count is 0, and the repo is not dirty, the tag itself supplies the version. 
+  - when the "ahead" count is 0, and the repo is dirty, the tag itself supplies the version, because this is the case in CI/CD environment. I wish I caould justify it better than that. 
+   - when you are developing, "ahead" some number of commits, the tag is version with `-SNAPSHOT` appended. 
 
 ## How It Works
 
