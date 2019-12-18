@@ -8,15 +8,15 @@
 
 # lein-git-inject
 
-Normally, when using lein, the `version` of an application or library is found by 
-looking in the `project.clj` and locating the 2nd argument of the `defproject`: 
+Normally, when using Leiningen, the `version` of an application or library is found by 
+looking in the `project.clj` and locating the 2nd argument of `defproject`: 
 ```
 (defproject day8/my-app-name "23.4.5"    ;;  <--- "23.4.5" is the version
    ...)
 ```
 
 This Leiningen middleware allows you to:
-   1. create a `version` at build time, and have this version be derived from the ambient git context, specifically the latest tag
+   1. derive the `version` from the ambient ***git context*** at ***build time*** (and specifically the latest tag)
    2. alter the lein `defproject` to use this derived `version` in the build process
    3. optionally, embed this `version` value within your ClojureScript application for purposes like logging 
    4. optionally, embed certain other ambient build-time values (like a timestamp) into your ClojureScript application
@@ -33,18 +33,21 @@ you will see a string response like:
 ```sh
 v1.0.4-14-g975b-dirty
 ```
-
-That string encodes four (hyphen separated) pieces of information:
+and this string encodes four (hyphen separated) pieces of information which we'll refer to as "the git context":
   - the latest tag: "v1.0.4"
-  - the number of commits you are "ahead" of the tag: "14" 
-  - the SHA for the commit referenced by the latest tag: "g975b"
-  - an indication that there are uncommitted changes: "dirty"
+  - the number of commits you are "ahead" of that latest tag: "14" 
+  - the SHA for the commit referenced by that latest tag: "g975b"
+  - an indication that there are uncommitted changes: "dirty"  (or blank)
   
-It is from these four values that this utility will build a `version` for your application or libary. 
+This utility will derive a `version` from these four values (at build time) - the  
+version will be based off git tagging.
 
-The most important of these four values is the latest tag. 
-
-XXX more here
+Often the situation is very simple, and the tag itself is the version - end of story. 
+But, if the developer has a git context in which they are "ahead" of
+the tag (they have commits after the tag was done), then the version should have `-SNAPSHOT` 
+added. And, sometimes, in certain continuous delivery environments, it is okay for the
+dirty flag to be true, providing the "ahead" count is zero.  Etc.  There are a couple of rules 
+to drive this. 
 
 ## How It works
 
@@ -56,45 +59,41 @@ of your `defproject` (within your `project.clj` file).
 
 ***First***, it will derive a `version` value from the ambient git context
 
-***Second***, it does a particular search and replace on the `EDN` in 
+***Second***, it will preform a search and replace on the `EDN` in 
 the `defproject`.  It searches for
-four special keywords or strings - referred to as `substitution keys` - 
+four special strings - referred to as `substitution keys` - 
 and, when it finds one of them, it replaces that key with the associated 
 value from the build context.  In particular, it replaces any occurance of the 
-substitution key `:lein-git-inject/version` with the `version` derived in step 1.
+substitution key `"lein-git-inject/version"` with the `version` derived in step 1.
 
 ***Third***, if you are compiling using a tool like shadow-clj, you can use the 
 `:clojure-defines` feature to push/embed values within the 
-`defproject` itself into `def`s within your application.
+`defproject` itself into `def`s within your application, making those values 
+available at run time.
 
 
 ## The Four Substitution Keys 
 
 This middleware performs search and replace on four `substitution keys` 
 within the `EDN` of your `defproject`. 
-It will search for these values as keywords or strings.  
+It will search for these strings:  
 
 
 |   substituion key                    |    example replacement      |
 |--------------------------------------|-----------------------------|
-| :lein-git-inject/version             |  "0.0.1"                    |
-| :lein-git-inject/build-iso-date-time |  "2019-11-18T00:05:02.273361"  |      
-| :lein-git-inject/build-iso-date-week |  "2019-W47-2"               |
-| :lein-git-inject/user-name           | "Isaac"                     |
+| "lein-git-inject/version"             |  "12.4.1-SNAPSHOT"                    |
+| "lein-git-inject/build-iso-date-time" |  "2019-11-18T00:05:02.273361"  |      
+| "lein-git-inject/build-iso-date-week" |  "2019-W47-2"               |
+| "lein-git-inject/user-name"           | "Isaac"                     |
 
-***Note:*** To debug these substitutions, you can use `lein pprint` 
+***Note #1:*** To debug these substitutions, you can use `lein pprint` 
 to see the the entire project map after the substitutions have taken place.
 
-
-***Note:*** XXX about strings vs keywords 
- 
-;; This note applies to the first line below.  
-;; Normally, a "substitution key" like :lein-git-inject/version can be 
-;; used within the EDN in either its string-form or as a keyword, either way is fine. 
-;; But within the `defproject` "version" you must use the string variant, 
-;; IF YOU ARE USING CURSIVE, because Cursive does some inspection
-;; of your project.clj ahead of any lein use - and it doesn't like to 
-;; see a keyword where a string is expected, in this one case.
+***Note #2:*** We deliberately choose keys to be strings over keywords, 
+because, when you are using Cursive,
+you can't have 2nd argument to `defproject` (the version!) be a keyword.
+Only a string can go there,
+because Cursive does some inspection of your project.clj ahead of any lein use. 
 
 ## How To Use It
 
@@ -102,9 +101,9 @@ Here's how your `project.clj` should be arranged to achive the three steps descr
 
 ```clojure
 
-;; Note that the version (3rd argument of defproject) is a substitution key. 
+;; On the next line, note that the version (2nd argument of defproject) is a 
+;; substitution key which will be replaced by the "git derived" version.
 (defproject day8/lein-git-inject-example "lein-git-inject/version"
-
   ...
 
   :plugins      [[day8/lein-git-inject "0.0.2"]   ;; <--- you must include this plugin
@@ -113,10 +112,10 @@ Here's how your `project.clj` should be arranged to achive the three steps descr
   :middleware   [leiningen.git-inject/middleware]  ;; <-- you must include this middleware
   
   
-  ;; Assuming you are using the shadow-clj compiler and lein-shadow so that the
-  ;; shadow-cljs configuration is in project.clj, below is an example of how to 
+  ;; If you are using the shadow-clj compiler and lein-shadow the
+  ;; shadow-cljs configuration is in project.clj. Below is an example of how to 
   ;; combine this middleware with a `:clojure-define` in order to 
-  ;; inject an ambient build value into a def within your application.
+  ;; inject values into your application.
   ;; 
   ;; You'll notice the use of the substitution key "lein-git-inject/version".  
   ;; At build time, this middleware will replace that keyword with a git-derived 
@@ -131,7 +130,7 @@ Here's how your `project.clj` should be arranged to achive the three steps descr
   :release-tasks [["vcs" "assert-committed"]
                   ["deploy"]]
 
-  ;; Optional configuration which specifies how to "derive" the version from git content.
+  ;; Optional configuration which specifies how to "derive" the "version" from the git content.
   :git-inject {
     ;; choose to ignore ahead or dirty state like this:
     :ignore-ahead?            true
