@@ -27,7 +27,7 @@ Regarding points 3 and 4, your application will contain one or more `def`s and t
 
 Assume for a minute that you are at the commandline in a git repo, and you type:
 ```sh
-$ git describe --tags --dirty=dirty
+$ git describe --tags --dirty=-dirty
 ```
 you will see a string response like:
 ```sh
