@@ -84,11 +84,13 @@ It will search for these strings:
 ***Note #1:*** To debug these substitutions, you can use `lein pprint` 
 to see the the entire project map after the substitutions have taken place.
 
-***Note #2:*** We deliberately choose keys to be strings over keywords, 
+***Note #2:*** Design decision: we deliberately choose keys to be strings over keywords, 
 because, when you are using Cursive,
 you can't have 2nd argument to `defproject` (the version!) be a keyword.
 Only a string can go there,
-because Cursive does some inspection of your project.clj ahead of any lein use. 
+because Cursive does some inspection of your project.clj ahead of any lein use. So, we
+decided to not support keyword keys, only strings, even though keywords seems like the idiomatic choice.
+There should only be one way. 
 
 ## How To Use It
 
