@@ -16,7 +16,7 @@ looking in the `project.clj` and locating the 2nd argument of the `defproject`:
 ```
 
 This Leiningen middleware allows you to:
-   1. create a `version` at build time, and have this version be derived from the ambient git context, specifically the tags
+   1. create a `version` at build time, and have this version be derived from the ambient git context, specifically the latest tag
    2. alter the lein `defproject` to use this derived `version` in the build process
    3. optionally, embed this `version` value within your ClojureScript application for purposes like logging 
    4. optionally, embed certain other ambient build-time values (like a timestamp) into your ClojureScript application
@@ -27,22 +27,22 @@ Regarding points 3 and 4, your application will contain one or more `def`s and t
 
 Assume for a minute that you are at the commandline in a git repo, and you type:
 ```sh
-$ git describe --tags --XXX --dirty=dirty
+$ git describe --tags --dirty=dirty
 ```
 you will see a string response like:
 ```sh
 v1.0.4-14-g975b-dirty
 ```
 
-That string encodes four pieces of information:
-  - the most recent tag "v1.0.4"
-  - how many commits you are "ahead" of the tag: "14" 
-  - a SHA for XXX
-  - an indication that there are uncommitted changes: dirty
+That string encodes four (hyphen separated) pieces of information:
+  - the latest tag: "v1.0.4"
+  - the number of commits you are "ahead" of the tag: "14" 
+  - the SHA for the commit referenced by the latest tag: "g975b"
+  - an indication that there are uncommitted changes: "dirty"
   
 It is from these four values that this utility will build a `version` for your application or libary. 
 
-The most important of these four values is the tag. 
+The most important of these four values is the latest tag. 
 
 XXX more here
 
@@ -50,7 +50,7 @@ XXX more here
 
 The entire process has three steps, and this middleware handles the first two of them. 
 
-As you read these three steps, please keep in minid that Leiningen middleware runs 
+As you read these three steps, please keep in mind that Leiningen middleware runs 
 very early in the Lein build pipeline. So early, in fact, that it can alter the `EDN` 
 of your `defproject` (within your `project.clj` file).
 
@@ -84,13 +84,10 @@ It will search for these values as keywords or strings.
 
 ***Note:*** To debug these substitutions, you can use `lein pprint` 
 to see the the entire project map after the substitutions have taken place.
+
+
+***Note:*** XXX about strings vs keywords 
  
-## How To Use It
-
-Here's how your `project.clj` should be arranged to achive the three steps described above ...
-
-```clojure
-
 ;; This note applies to the first line below.  
 ;; Normally, a "substitution key" like :lein-git-inject/version can be 
 ;; used within the EDN in either its string-form or as a keyword, either way is fine. 
@@ -99,6 +96,13 @@ Here's how your `project.clj` should be arranged to achive the three steps descr
 ;; of your project.clj ahead of any lein use - and it doesn't like to 
 ;; see a keyword where a string is expected, in this one case.
 
+## How To Use It
+
+Here's how your `project.clj` should be arranged to achive the three steps described above ...
+
+```clojure
+
+;; Note that the version (3rd argument of defproject) is a substitution key. 
 (defproject day8/lein-git-inject-example "lein-git-inject/version"
 
   ...
@@ -114,12 +118,12 @@ Here's how your `project.clj` should be arranged to achive the three steps descr
   ;; combine this middleware with a `:clojure-define` in order to 
   ;; inject an ambient build value into a def within your application.
   ;; 
-  ;; You'll notice the use of the substitution key ":lein-git-inject/version".  
+  ;; You'll notice the use of the substitution key "lein-git-inject/version".  
   ;; At build time, this middleware will replace that keyword with a git-derived 
   ;; value. In turn, that value is used within a `:clojure-define` to place
   ;; it into a `def` (called `version` within the namespace `some.namespace`). 
   :shadow-cljs {:builds {:app {:target :browser
-                               :release {:compiler-options {:closure-defines {some.namespace.version  :lein-git-inject/version}}}}}}
+                               :release {:compiler-options {:closure-defines {some.namespace.version  "lein-git-inject/version"}}}}}}
 
   ;; Note: by default, lein will change the version in project.clj when you do a `lein release`. 
   ;; To avoid this (because you now want the version to come from the git context at build time), 
