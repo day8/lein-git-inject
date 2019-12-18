@@ -16,7 +16,7 @@ looking in the `project.clj` and locating the 2nd argument of `defproject`:
 ```
 
 This Leiningen middleware allows you to:
-   1. derive the `version` from the ambient ***git context*** at ***build time*** (and specifically the latest tag)
+   1. derive the `version` from the ambient ***git context*** at ***build time*** (and, specifically, the latest git tag)
    2. alter the lein `defproject` to use this derived `version` in the build process
    3. optionally, embed this `version` value within your ClojureScript application for purposes like logging 
    4. optionally, embed certain other ambient build-time values (like a timestamp) into your ClojureScript application
