@@ -41,8 +41,8 @@ and this string encodes four (hyphen separated) pieces of information which we r
   
 This utility will construct a `version` from these four values, at build time, using a series of rules:
   - when the "ahead" count is 0, and the repo is not dirty, the tag itself supplies the version. 
-  - when the "ahead" count is 0, and the repo is dirty, the tag itself supplies the version, because this is the case in CI/CD environment. I wish I caould justify it better than that. 
-   - when you are developing, "ahead" some number of commits, the tag is version with `-SNAPSHOT` appended. 
+  - when the "ahead" count is 0, and the repo is dirty, the tag itself supplies the version (same as above). Why? Well, because we (Day8) are faced with this scanario in our CI/CD environments (long story). I wish I could justify it better than that. 
+   - when you are developing, and you are "ahead" some number of commits, the version is the `tag` with `-SNAPSHOT` appended. 
 
 ## How It Works
 
