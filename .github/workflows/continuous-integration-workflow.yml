@@ -11,3 +11,15 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - run: lein test
+      - name: Slack notification
+        uses: homoluctus/slatify@v2.0.1
+        if: always()
+        with:
+          type: ${{ job.status  }}
+          job_name: lein-git-inject Tests
+          channel: '#oss-robots'
+          mention: 'channel'
+          mention_if: 'failure'
+          url: ${{ secrets.SLACK_WEBHOOK }}
+          commit: true
+          token: ${{ secrets.GITHUB_TOKEN }}
