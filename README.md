@@ -16,12 +16,12 @@ looking in the `project.clj` and locating the 2nd argument of `defproject`:
 ```
 
 This Leiningen middleware allows you to:
-   1. construct the `version` from ***the ambient git context*** at ***build time*** (and, specifically, from the latest git tag)
-   2. alter the lein `defproject` to use this constructed `version` in the build process
+   1. extract the `version` from ***the ambient git context*** at ***build time*** (and, specifically, from the latest git tag matching a version pattern)
+   2. alter the lein `defproject` to use this extracted `version` in the build process
    3. optionally, embed this `version` value within your ClojureScript application for purposes like logging 
    4. optionally, embed certain other ambient build-time values (like a timestamp) into your ClojureScript application
 
-Regarding points 3 and 4, your application will contain one or more `def`s and they will be bound to the build-time values.
+Regarding points 3 and 4, your application will contain one or more `goog-defines`s and they will be bound to the build-time values.
 
 ## A Git Backgrounder 
 
@@ -40,11 +40,8 @@ and this string encodes four (hyphen separated) pieces of information which we r
   - an indication that there are uncommitted changes: "dirty"  (or absent)
   
 This utility will construct a `version` from these values, at build time, using a series of rules. 
-  - when the "ahead" count is 0, and the repo is not dirty, the tag itself supplies the version. 
-  - when the "ahead" count is 0, and the repo is dirty, the tag itself supplies the version (same as above). Why? Well, because we (Day8) are faced with this scanario in our CI/CD environments (long story). I wish I could justify it better than that. 
-   - when you are developing, and you are "ahead" some number of commits, the version is the `tag` with `-SNAPSHOT` appended. 
-
-***Note:*** the rules only involve three of the four values - the SHA value is ignored.
+  - when the "ahead" count is 0, and the repo is not dirty, the tag itself supplies the version.
+  - when the "ahead" count is non-zero, or the repo is dirty, the tag will be suffixed with `-<ahead-count>-<short-ref>-SNAPSHOT`; e.g. `0.0.5-0-453a730-SNAPSHOT`
 
 ## How It Works
 
@@ -78,7 +75,7 @@ It will search for these strings:
 
 |   substituion key                    |    example replacement      |
 |--------------------------------------|-----------------------------|
-| "lein-git-inject/version"             |  "12.4.1-SNAPSHOT"                    |
+| "lein-git-inject/version"             |  "12.4.1-2-453a730-SNAPSHOT"                    |
 | "lein-git-inject/build-iso-date-time" |  "2019-11-18T00:05:02.273361"  |      
 | "lein-git-inject/build-iso-date-week" |  "2019-W47-2"               |
 | "lein-git-inject/user-name"           | "Isaac"                     |
@@ -105,7 +102,7 @@ Here's how your `project.clj` should be arranged to achive the three steps descr
 (defproject day8/lein-git-inject-example "lein-git-inject/version"
   ...
 
-  :plugins      [[day8/lein-git-inject "0.0.2"]   ;; <--- you must include this plugin
+  :plugins      [[day8/lein-git-inject "0.0.5"]   ;; <--- you must include this plugin
                  [lein-shadow          "0.1.7"]]
 
   :middleware   [leiningen.git-inject/middleware]  ;; <-- you must include this middleware
@@ -131,32 +128,29 @@ Here's how your `project.clj` should be arranged to achive the three steps descr
 
   ;; Optional configuration which specifies how to "derive" the "version" from the git content.
   :git-inject {
-    ;; choose to ignore ahead or dirty state like this:
-    :ignore-ahead?            true
-    :ignore-dirty?            true
-
     ;; Optional: you may customize the patterns used to extract versions from
     ;; tags like below. Note only ahead (or ignore-ahead?) and dirty
     ;; (or ignore-dirty?) state is used to choose between release or snapshot
     ;; versions. The below patterns simply extract values from the tag to be
     ;; injected.
-    :release-version-pattern  #"v?(.*)"
-    :snapshot-version-pattern #"v?(\d+)\.(\d+)\.(\d+)(-.+)?"
-
-    :git-describe->version [ {#"v([0-9]*.[0-9]*.[0-9])-[1-9][0-9]+.*"   #""}
-                  ]
-    })
+    :version-pattern  #"version\/(.*)" }
+)
 ```
 
-## More Explanation 
+If tags do not match `:version-pattern` then the behaviour of this plugin is as
+if those tags do not exist; i.e. it will not be used as a reference for calculating
+the version, ahead or dirty state. If not tag matches, you'll get `version-unavailable`
+as the version.
 
-XXX explain how a tag is not considered a version tag unless it matches the regex
+## More Explanation 
 
 XXX explain how you should add triggers to ensure that tags are of the right format. 
 
 ## License
 
 Copyright © 2019 Mike Thompson
+
+Derived from cuddlefish © 2018 Reid "arrdem" McKenzie
 
 Derived from lein-git-version © 2017 Reid "arrdem" McKenzie
 

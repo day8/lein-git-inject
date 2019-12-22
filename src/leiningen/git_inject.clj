@@ -1,49 +1,131 @@
 (ns leiningen.git-inject
   (:require
     [clojure.walk :as walk]
-    [cuddlefish.core :as git]
-    [clojure.string :as string])
+    [clojure.string :as string]
+    [clojure.java.shell :refer [sh]]
+    [clojure.java.io :as io])
   (:import
-    (java.io IOException)
+    (java.io BufferedReader StringReader IOException)
     (java.time LocalDateTime)
     (java.time.format DateTimeFormatter)))
 
 (def default-config
   "The default configuration values."
-  {:git                      "git"
-   :describe-pattern         git/git-describe-pattern
-   :ignore-ahead?            false
-   :ignore-dirty?            false
-   :release-version-pattern  #"v?(.*)"
-   :snapshot-version-pattern #"v?(\d+)\.(\d+)\.(\d+)(-.+)?"})
+  {:git               "git"
+   :describe-pattern  #"(?<tag>.*)-(?<ahead>\d+)-g(?<ref>[0-9a-f]*)(?<dirty>(-dirty)?)"
+   :version-pattern   #"version\/(\d+\.\d+\.\d+)"})
+
+(defmacro let-groups
+  "Let for binding groups out of a j.u.r.Pattern j.u.r.Matcher."
+  {:style/indent [1]}
+  [[bindings m] & body]
+  (let [s (with-meta (gensym "matcher") {:tag java.util.regex.Matcher})]
+    `(let [~s ~m
+           ~@(mapcat identity
+                     (for [b bindings]
+                       `[~b (.group ~s ~(name b))]))]
+       ~@body)))
+
+(defn ensure-pattern
+  "Given a string, compiles it to a java.util.regex.Pattern."
+  [x label]
+  (cond (string? x)
+        (re-pattern x)
+
+        (instance? java.util.regex.Pattern x)
+        x
+
+        :else
+        (throw (IllegalArgumentException. (str "lein-git-inject " label " requires a string or a java.util.regex.Pattern!")))))
+
+(defn parse-tag-list
+  "Used to parse the output of git tag --list --merged=HEAD --sort=-taggerdate.
+
+   Returns the most recent tag by tagger date (not committer date!) that matches
+   version-pattern, otherwise nil."
+  [{:keys [version-pattern] :as config} out]
+  (let [pattern (ensure-pattern version-pattern ":version-pattern")]
+    (first (filter #(re-matches pattern %) (string/split-lines out)))))
+
+(defn tag-list
+  [{:keys [git] :as config}]
+  (let [{:keys [exit out] :as child} (apply sh [git "tag" "--merged=HEAD" "--sort=-taggerdate"])]
+    (if-not (= exit 0)
+      (binding [*out* *err*]
+        (printf "Warning: lein-git-inject git exited %d\n%s\n\n"
+                exit child)
+        (.flush *out*)
+        nil)
+      (parse-tag-list config (string/trim out)))))
+
+(defn resolve-ref
+  "Fetches the git ref of ref, being a tag or ref name."
+  [{:keys [git] :as config} ref]
+  (let [{:keys [exit out] :as child} (apply sh [git "rev-parse" "--verify" ref])]
+    (if-not (= exit 0)
+      (binding [*out* *err*]
+        (printf "Warning: lein-git-inject git exited %d\n%s\n\n"
+                exit child)
+        (.flush *out*)
+        nil)
+      (string/trim out))))
+
+(defn parse-describe
+  "Used to parse the output of git-describe, using the configured `describe-pattern`.
+
+  Returns a map `{:tag, :ahead, :ahead?, :ref, :ref-short, :dirty?}`
+  if the pattern matches, otherwise returns the empty map."
+  [{:keys [describe-pattern] :as config} out]
+  (let [pattern (ensure-pattern describe-pattern ":describe-pattern")
+        matcher (re-matcher pattern out)]
+    (if-not (.matches matcher)
+      (do (binding [*out* *err*]
+            (printf (str "Warning: lein-git-inject couldn't match the current repo status:\n%s\n\n"
+                         "Against pattern:\n%s\n\n")
+                    (pr-str out) pattern)
+            (.flush *out*))
+          {})
+      (let-groups [[tag ahead ref dirty] matcher]
+                  {:tag       tag
+                   :ahead     (Integer/parseInt ahead)
+                   :ahead?    (not= ahead "0")
+                   :ref       (resolve-ref config "HEAD")
+                   :ref-short ref
+                   :dirty?    (not= "" dirty)}))))
+
+(defn describe
+  "Uses git-describe to parse the status of the repository.
+
+  Using the configured `git` and `describe-pattern` to parse the output.
+
+  Returns a map `{:tag, :ahead, :ahead?, :ref, :ref-short, :dirty?}`
+  if the pattern matches, otherwise returns the empty map."
+  [{:keys [git] :as config}]
+  (let [most-recent-version-tag (tag-list config)]
+    (if-not most-recent-version-tag
+      {}
+      (let [{:keys [exit out] :as child} (apply sh [git "describe" "--tags" "--dirty" "--long" "--match" most-recent-version-tag])]
+        (if-not (= exit 0)
+          (binding [*out* *err*]
+            (printf "Warning: lein-git-inject git exited %d\n%s\n\n"
+                    exit child)
+            (.flush *out*)
+            {})
+          (parse-describe config (string/trim out)))))))
 
 (defn git-status-to-version
-  [{:keys [ignore-ahead? ignore-dirty? release-version-pattern snapshot-version-pattern] :as config}]
+  [{:keys [version-pattern] :as config}]
   (try
-    (let [{:keys [tag ahead ahead? dirty?]} (git/status (select-keys config [:git :describe-pattern]))]
+    (let [{:keys [tag ahead ahead? dirty? ref-short]} (describe config)]
       (if-not (string? tag)
         ;; If git status is nil (e.g. IntelliJ evaluating project.clj):
-        "git-tag-unavailable"
-        (if (and (or ignore-ahead? (not ahead?))
-                 (or ignore-dirty? (not dirty?)))
-          ;; If this is a release version:
-          (let [[_ release-version] (re-find release-version-pattern tag)]
-            (if (nil? release-version)
-              ;; If tag is poorly formatted:
-              "git-tag-invalid"
-              ;; Otherwise we have a good release version:
-              release-version))
-          ;; Otherwise this is a snapshot version:
-          (let [[_ major minor patch suffix] (re-find snapshot-version-pattern tag)]
-            (if (nil? major)
-              ;; If tag is poorly formatted:
-              "git-tag-invalid"
-              (let [patch' (try (Long/parseLong patch) (catch Throwable _ 0))
-                    patch+ (inc patch')]
-                ;; Otherwise we have a good snapshot version:
-                (str major "." minor "." patch+ suffix
-                     (when-not ignore-ahead? (str "-" ahead))
-                     "-SNAPSHOT")))))))
+        "version-unavailable"
+        (let [[_ version] (re-find version-pattern tag)]
+          (if (and (not ahead?)
+                   (not dirty?))
+            ;; If this is a release version:
+            version
+            (str version "-" ahead "-" ref-short "-SNAPSHOT")))))
     (catch IOException _
       ;; If git binary is not available (e.g. not in path):
       "git-unavailable")))
