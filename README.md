@@ -139,7 +139,7 @@ Here's how your `project.clj` should be arranged to achive the three steps descr
 
 If tags do not match `:version-pattern` then the behaviour of this plugin is as
 if those tags do not exist; i.e. it will not be used as a reference for calculating
-the version, ahead or dirty state. If not tag matches, you'll get `version-unavailable`
+the version, ahead or dirty state. If no tag matches, you'll get `version-unavailable`
 as the version.
 
 ## More Explanation 
