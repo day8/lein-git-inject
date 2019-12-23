@@ -8,15 +8,15 @@
 
 # lein-git-inject
 
-Normally, when using Leiningen, the `version` of an application or library is found by 
-looking in the `project.clj` and locating the 2nd argument of `defproject`: 
+Normally, when using Leiningen, the `version` of an application or library can be found by 
+impecting the `project.clj` and locating the 2nd argument of `defproject`: 
 ```
 (defproject day8/my-app-name "23.4.5"    ;;  <--- "23.4.5" is the version
    ...)
 ```
 
 This Leiningen middleware allows you to:
-   1. construct the `version` from ***the ambient git context*** at ***build time*** and, specifically, from the latest git tag matching a regex that you supply.
+   1. construct the `version` from ***the ambient git context*** at ***build time*** and, specifically, from the latest git tag.
    2. alter the lein `defproject` to use this constructed `version` in the build process
    3. optionally, embed this `version` value within your ClojureScript application for purposes like logging 
    4. optionally, embed certain other ambient build-time values (like a timestamp) into your ClojureScript application
@@ -42,6 +42,19 @@ which is a string that encodes four (hyphen separated) pieces of information whi
 This utility will construct a `version` from these values, at build time, using two rules:
   - when the "ahead" count is 0, and the repo is not dirty, the tag itself supplies the `version`
   - when the "ahead" count is non-zero, or the repo is dirty, the `version` will be the tag suffixed with `-<ahead-count>-<short-ref>-SNAPSHOT`; e.g. `1.0.4-3-g975b-SNAPSHOT`
+  
+## Latest Tag?
+
+Above, we said a `version` will be constructed using the "latest tag" but that's an approximately useful white lie, to initially facilitate understanding.  
+
+The full truth in note form is:
+  1. what's used is the latest "version tag" found in the commit history 
+  2. a "version tag" is any tag which matches the regex: `#"^version\/(\d+\.\d+\.\d+)$"`
+  3. So your tags will look like this:  "version/1.2.3"
+  4. You can, optionally, override this regex with your own (see below)
+  5. So this middleware will inspect the current branch's history for tags and find the latest one which matches the regex, and it is THAT tag which used. And it is that tag against which the "ahead count" will be calculated.
+  6. If no matching tag is found then the "version" will be XXX Issac
+  7. This approach does have a potential dark side. If you mistakenly add a tag XXXX
 
 ## How It Works
 
@@ -65,6 +78,10 @@ substitution key `"lein-git-inject/version"` with the `version` constructed in s
 `defproject` itself into `def`s within your application, making those values 
 available at run time for purposes like logging.
 
+
+## Version Tags 
+
+In step 1. Above I ta
 
 ## The Four Substitution Keys 
 
@@ -90,6 +107,7 @@ Only a string can go there
 because Cursive does some inspection of your `project.clj` ahead of any lein use. So, we
 decided to not support keyword keys, only strings, even though keywords seems like the idiomatic choice.
 And it is better if there is only be one way to do something. 
+
 
 ## How To Use It
 
@@ -136,8 +154,6 @@ Here's how your `project.clj` should be arranged to achive the three steps descr
     ;; versions. The below patterns simply extract values from the tag to be
     ;; injected.
 
-XXX Issac default??
-XXX searches backwards??
     :version-pattern  #"version\/(.*)" }
 )
 ```
