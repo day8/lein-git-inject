@@ -8,15 +8,15 @@
 
 # lein-git-inject
 
-When using Leiningen, the `version` of an application or library is found by 
-inspecting the `project.clj` and locating the 2nd argument of `defproject`: 
+Normally, when using Leiningen, the `version` of your application or library is encoded
+as the 2nd argument to `defproject` (within your `project.clj` file): 
 ```
 (defproject day8/my-app-name "23.4.5"    ;;  <--- "23.4.5" is the version
    ...)
 ```
 
-This Leiningen middleware allows you to:
-   1. construct the `version` from ***the ambient git context*** at ***build time*** and, specifically, from the latest git tag.
+This Leiningen middleware changes how a `version` is encoded.  It allows you to:
+   1. construct the `version` from ***the ambient git context*** at ***build time*** and, specifically, from the latest git tag
    2. alter the lein `defproject` to use this constructed `version` in the build process
    3. optionally, embed this `version` value within your ClojureScript application, for purposes like logging 
    4. optionally, embed certain other ambient build-time values (like a timestamp) into your ClojureScript application
@@ -29,38 +29,36 @@ You are at the command line in a git repo, and you execute:
 ```sh
 $ git describe --tags --dirty=-dirty
 ```
-and you will see the output:
+which will produce output like this:
 ```sh
 v1.0.4-3-g975b-dirty
 ```
-That output encodes four (hyphen separated) pieces of data which we refer to as "the ambient git context":
+which encodes four (hyphen separated) pieces of data which we refer to as "the ambient git context":
   - the latest tag: "v1.0.4"
   - the number of commits you are "ahead" of that latest tag: "3" 
   - the short ref (SHA) for the commit referenced by that latest tag: "g975b"
   - an indication that there are uncommitted changes: "dirty"  (or absent)
   
-This utility will construct a `version` from these values, at build time, using two rules:
+This middleware will construct a `version` from these values, at build time, using two rules:
   - when the "ahead" count is 0, and the repo is not dirty, the `version` will be the tag (eg: `1.0.4`)
   - when the "ahead" count is non-zero, or the repo is dirty, the `version` will be the tag suffixed with `-<ahead-count>-<short-ref>-SNAPSHOT`; e.g. `1.0.4-3-g975b-SNAPSHOT`
-  
+
 ## Latest Tag?
 
-Above, we said a `version` will be constructed using the "latest tag" but that's an approximately useful white lie, to initially facilitate understanding.
+Above, we said a `version` was constructed using the "latest tag" but that was a white lie, to initially facilitate understanding.
 
 The full truth is:
-  1. what's used is the latest "version tag" found in the commit history 
+  1. what's used is the latest "version tag" found in the commit history
   2. by default, a "version tag" is any tag which matches the regex: `#"^version\/(\d+\.\d+\.\d+)$"`
-  3. So you will be creating tags which look like this: `version/1.2.3`  (that's `version/` followed by a semver)
+  3. so, a version tag would look like this: `version/1.2.3`  (that's the string `version/` followed by a semver)
   4. You can, optionally, override this regex with your own (see below) to specify a different structure for your version tags
-  5. This middleware will inspect the current branch's history for tags and will find the latest one which matches the regex, and it is THAT tag which used, and it is that tag against which the "ahead count" will be calculated, etc.
+  5. This middleware will inspect the current branch's history for tags and it will find the latest one which matches the regex, and it is THAT tag which used to construct a version, and it is that tag against which the "ahead count" will be calculated, etc.
   
 Sharp edges to be aware of:
   - if no matching tag is found then the "version" constructed will be `version-unavailable`
-  - if the `git` command line is not available, then the version constructed will be `version-unavailable`
-  - this approach does have one potential dark/confusing side which you'll probably want to guard against. If you misspelled your tag `ersion/1.2.3`,
-the regex won't match, the tag will be ignored, and an earlier tag will be used. Which is bad. To guard against this, you'll want to add a trigger in your repo to verify/assert that any tags added conform to a small set of cases like `version/*` or `doc/.*`. See github actions. 
-  - `lein release` will massage your `project.clj` in unwanted ways unless you take some action (see the example below)
-
+  - this middleware will obtain the "ambient git context" by shelling out `git` commandline. If this commandline is not available, then you'll see error messages and the `version` constructed will be `version-unavailable`
+  - this approach does have one potential dark/confusing side which you'll probably want to guard against: misspelling you tag. Let's say you tag with `ersion/1.2.3` (oops typo) which means the regex won't match, the tag will be ignored, and an earlier tag will be used. Which is not what you intended. Which is bad. To guard against this, you'll want to add a trigger in your repo to verify/assert that any tags added conform to a small set of allowable cases like `version/*` or `doc/.*`. See github actions. 
+  - `lein release` will massage the `version` in your `project.clj` in unwanted ways unless you take some action (see the example below regarding that action)
 
 ## Three Steps
 
