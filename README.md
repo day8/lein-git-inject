@@ -45,12 +45,12 @@ This middleware will construct a `version` from these values, at build time, usi
 
 ## Latest Tag?
 
-Earlier, I sinned. It was a white lie to say that a `version` was constructed using the "latest tag". 
+Earlier, I said that a `version` was constructed using the "latest tag". While that's often true, it is not the full story. 
 
-The full truth is:
+The full truth is: 
   1. what's used is the latest "version tag" found in the commit history
-  2. a "version tag" is any tag which matches the regex: `#"^version\/(\d+\.\d+\.\d+)$"`. It has a specific structure.
-  3. so, a version tag might look like this: `version/1.2.3`  (that's the string `version/` followed by some semver structure)
+  2. a "version tag" is any tag which matches the regex: `#"^version\/(\d+\.\d+\.\d+)$"`. So, it is a tag with a specific textual structure.
+  3. A version tag might look like this: `version/1.2.3`  (that's the string `version/` followed by a semver structure)
   4. You can override this default regex with your own (see below)
   5. This middleware will inspect the current branch's history for tags and it will find the latest one which matches the regex, and it is THAT tag which used to construct a version - it is that tag against which the "ahead count" will be calculated, etc.
   
