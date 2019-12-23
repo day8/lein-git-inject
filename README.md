@@ -45,22 +45,22 @@ This middleware will construct a `version` from these values, at build time, usi
 
 ## Latest Tag?
 
-Above, we said a `version` was constructed using the "latest tag" but that was a white lie, to initially facilitate understanding.
+Earlier, I sinned. It was a white lie to say that a `version` was constructed using the "latest tag". 
 
 The full truth is:
   1. what's used is the latest "version tag" found in the commit history
-  2. by default, a "version tag" is any tag which matches the regex: `#"^version\/(\d+\.\d+\.\d+)$"`
-  3. so, a version tag would look like this: `version/1.2.3`  (that's the string `version/` followed by a semver)
-  4. You can, optionally, override this regex with your own (see below) to specify a different structure for your version tags
-  5. This middleware will inspect the current branch's history for tags and it will find the latest one which matches the regex, and it is THAT tag which used to construct a version, and it is that tag against which the "ahead count" will be calculated, etc.
+  2. a "version tag" is any tag which matches the regex: `#"^version\/(\d+\.\d+\.\d+)$"`. It has a specific structure.
+  3. so, a version tag might look like this: `version/1.2.3`  (that's the string `version/` followed by some semver structure)
+  4. You can override this default regex with your own (see below)
+  5. This middleware will inspect the current branch's history for tags and it will find the latest one which matches the regex, and it is THAT tag which used to construct a version - it is that tag against which the "ahead count" will be calculated, etc.
   
 Sharp edges to be aware of:
   - if no matching tag is found then the "version" constructed will be `version-unavailable`
-  - this middleware will obtain the "ambient git context" by shelling out `git` commandline. If this commandline is not available, then you'll see error messages and the `version` constructed will be `version-unavailable`
-  - this approach does have one potential dark/confusing side which you'll probably want to guard against: misspelling you tag. Let's say you tag with `ersion/1.2.3` (oops typo) which means the regex won't match, the tag will be ignored, and an earlier tag will be used. Which is not what you intended. Which is bad. To guard against this, you'll want to add a trigger in your repo to verify/assert that any tags added conform to a small set of allowable cases like `version/*` or `doc/.*`. See github actions. 
-  - `lein release` will massage the `version` in your `project.clj` in unwanted ways unless you take some action (see the example below regarding that action)
+  - this middleware will obtain the "ambient git context" by shelling out to the `git` commandline. If this commandline is not available, then you'll see messages on stderr and the `version` constructed will be `version-unavailable`
+  - this approach does have one potential dark/confusing side which you'll probably want to guard against: misspelling you tag. Let's say you tag with `ersion/1.2.3` (can you see the typo?) which means the regex won't match, the tag will be ignored, and an earlier tag will be used. Which is not what you intended. Which is bad. To guard against this, you'll want to add a trigger (Github action ?) to  your repo to verify/assert that any tags added conform to a small set of allowable cases like `version/*` or `doc/.*`.
+  - `lein release` will massage the `version` in your `project.clj` in unwanted ways unless you take some action (see the "Example" below regarding that action)
 
-## Three Steps
+## The Three Steps
 
 The entire process has three steps, and this middleware handles the first two of them. 
 
@@ -111,13 +111,13 @@ And it is better if there is only be one way to do something.
 
 ## Example
 
-Here's how your `project.clj` should be arranged to achieve the three steps described above ...
+Here's how to write your `project.clj` to achieve the three steps described above ...
 
 ```clojure
 
 ;; On the next line, note that the version (2nd argument of defproject) is a 
 ;; substitution key which will be replaced by the "constructed version" which is
-;; built from the git context, using two rules.
+;; built from the ambient git context, using the two rules.
 (defproject day8/lein-git-inject-example "lein-git-inject/version"
   ...
 
