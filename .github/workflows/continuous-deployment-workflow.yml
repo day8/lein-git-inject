@@ -26,7 +26,7 @@ jobs:
         if: steps.maven-cache.outputs.cache-hit == 'true'
       - name: Slack notification
         uses: homoluctus/slatify@v2.0.1
-        if: always()
+        if: failure() || cancelled()
         with:
           type: ${{ job.status  }}
           job_name: lein-git-inject Tests
@@ -64,7 +64,7 @@ jobs:
         uses: homoluctus/slatify@v2.0.1
         if: always()
         with:
-          type: ${{ job.status  }}
+          type: ${{ job.status }}
           job_name: lein-git-inject Release
           channel: '#oss-robots'
           mention: 'channel'
