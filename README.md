@@ -49,12 +49,15 @@ Above, we said a `version` will be constructed using the "latest tag" but that's
 
 The full truth in note form is:
   1. what's used is the latest "version tag" found in the commit history 
-  2. a "version tag" is any tag which matches the regex: `#"^version\/(\d+\.\d+\.\d+)$"`
-  3. So your tags will look like this:  "version/1.2.3"
-  4. You can, optionally, override this regex with your own (see below)
-  5. So this middleware will inspect the current branch's history for tags and find the latest one which matches the regex, and it is THAT tag which used. And it is that tag against which the "ahead count" will be calculated.
-  6. If no matching tag is found then the "version" will be XXX Issac
-  7. This approach does have a potential dark side. If you mistakenly add a tag XXXX
+  2. by default, a "version tag" is any tag which matches the regex: `#"^version\/(\d+\.\d+\.\d+)$"`
+  3. So your tags will look like this:  `version/1.2.3`  (that's `version/` followed by a semver)
+  4. You can, optionally, override this regex with your own (see below) to define version tags differently.
+  5. This middleware will inspect the current branch's history for tags and find the latest one which matches the regex, and it is THAT tag which used, and it is that tag against which the "ahead count" will be calculated, etc.
+  6. If no matching tag is found then the "version" constructed will be `version-unavailable`
+  7. It the git commandline in not available, then the version constructed will be `version-unavailable`
+  8. This approach does have one potential dark/confusing side. If you mispelled your tag `ersion/1.2.3`,
+the regex won't match, the tag will be ignored, and an earlier tag will be used. Which is bad. To guard against this, you might want to add a trigger in your repo to verify/assert that any tags added conform to a small set of cases like `version/*` or `doc/.*`.
+
 
 ## How It Works
 
@@ -146,26 +149,15 @@ Here's how your `project.clj` should be arranged to achive the three steps descr
                   ["deploy"]]
 
   ;; Optional configuration 
+  ;; If you want to use your own regex to identify version tags. 
+  ;; Remember that git won't allow you to use ":" in a reference
+  ;; Note: the regex you supply should "match" the tag and it would also 
+  ;; return a match group which is the actual tag to use.
   :git-inject {
-    ;; Optional: you can  customize the pattern used to recognise tags which
-    ;; relatre to versions. extract versions from
-    ;; tags like below. Note only ahead (or ignore-ahead?) and dirty
-    ;; (or ignore-dirty?) state is used to choose between release or snapshot
-    ;; versions. The below patterns simply extract values from the tag to be
-    ;; injected.
-
-    :version-pattern  #"version\/(.*)" }
+    :version-pattern  #"$v\/(.*)" }
 )
 ```
 
-If tags do not match `:version-pattern` then the behaviour of this plugin is as
-if those tags do not exist; i.e. it will not be used as a reference for calculating
-the version, ahead or dirty state. If no tag matches, you'll get `version-unavailable`
-as the version.
-
-## More Explanation 
-
-XXX explain how you should add triggers to ensure that tags are of the right format. 
 
 ## License
 
