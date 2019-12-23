@@ -16,8 +16,8 @@ looking in the `project.clj` and locating the 2nd argument of `defproject`:
 ```
 
 This Leiningen middleware allows you to:
-   1. extract the `version` from ***the ambient git context*** at ***build time*** (and, specifically, from the latest git tag matching a version pattern)
-   2. alter the lein `defproject` to use this extracted `version` in the build process
+   1. construct the `version` from ***the ambient git context*** at ***build time*** and, specifically, from the latest git tag matching a regex that you supply.
+   2. alter the lein `defproject` to use this constructed `version` in the build process
    3. optionally, embed this `version` value within your ClojureScript application for purposes like logging 
    4. optionally, embed certain other ambient build-time values (like a timestamp) into your ClojureScript application
 
@@ -33,15 +33,15 @@ you will see a string response like:
 ```sh
 v1.0.4-3-g975b-dirty
 ```
-and this string encodes four (hyphen separated) pieces of information which we refer to as "the ambient git context":
+which is a string that encodes four (hyphen separated) pieces of information which we refer to as "the ambient git context":
   - the latest tag: "v1.0.4"
   - the number of commits you are "ahead" of that latest tag: "3" 
-  - the SHA for the commit referenced by that latest tag: "g975b"
+  - the short ref (SHA) for the commit referenced by that latest tag: "g975b"
   - an indication that there are uncommitted changes: "dirty"  (or absent)
   
-This utility will construct a `version` from these values, at build time, using a series of rules. 
-  - when the "ahead" count is 0, and the repo is not dirty, the tag itself supplies the version.
-  - when the "ahead" count is non-zero, or the repo is dirty, the tag will be suffixed with `-<ahead-count>-<short-ref>-SNAPSHOT`; e.g. `0.0.5-0-453a730-SNAPSHOT`
+This utility will construct a `version` from these values, at build time, using two rules:
+  - when the "ahead" count is 0, and the repo is not dirty, the tag itself supplies the `version`
+  - when the "ahead" count is non-zero, or the repo is dirty, the `version` will be the tag suffixed with `-<ahead-count>-<short-ref>-SNAPSHOT`; e.g. `1.0.4-3-g975b-SNAPSHOT`
 
 ## How It Works
 
@@ -51,19 +51,19 @@ As you read these three steps, please keep in mind that Leiningen middleware run
 very early in the Lein build pipeline. So early, in fact, that it can alter the `EDN` 
 of your `defproject` (within your `project.clj` file).
 
-***First***, it will construct a `version` value from the ambient git context
+***First***, it will construct a `version` value from the ambient git context using the two "construction rules" above.
 
 ***Second***, it will preform a search and replace on the `EDN` in 
 the `defproject`.  It searches for
 four special strings - referred to as `substitution keys` - 
 and, when it finds one of them, it replaces that key with the associated 
 value from the build context.  In particular, it replaces any occurance of the 
-substitution key `"lein-git-inject/version"` with the `version` derived in step 1.
+substitution key `"lein-git-inject/version"` with the `version` constructed in step 1.
 
 ***Third***, if you are compiling using a tool like shadow-clj, you can use the 
 `:clojure-defines` feature to push/embed values within the 
 `defproject` itself into `def`s within your application, making those values 
-available at run time.
+available at run time for purposes like logging.
 
 
 ## The Four Substitution Keys 
@@ -83,13 +83,13 @@ It will search for these strings:
 ***Note #1:*** To debug these substitutions, you can use `lein pprint` 
 to see the the entire project map after the substitutions have taken place.
 
-***Note #2:*** Design decision: we deliberately choose keys to be strings over keywords, 
+***Note #2:*** Design decision: we deliberately choose keys to be strings (not keywords), 
 because, when you are using Cursive,
 you can't have 2nd argument to `defproject` (the version!) be a keyword.
-Only a string can go there,
-because Cursive does some inspection of your project.clj ahead of any lein use. So, we
+Only a string can go there
+because Cursive does some inspection of your `project.clj` ahead of any lein use. So, we
 decided to not support keyword keys, only strings, even though keywords seems like the idiomatic choice.
-There should only be one way. 
+And it is better if there is only be one way to do something. 
 
 ## How To Use It
 
@@ -98,7 +98,8 @@ Here's how your `project.clj` should be arranged to achive the three steps descr
 ```clojure
 
 ;; On the next line, note that the version (2nd argument of defproject) is a 
-;; substitution key which will be replaced by the "git derived" version.
+;; substitution key which will be replaced by the "constructed version" which is
+;; built from the git context, using two rules.
 (defproject day8/lein-git-inject-example "lein-git-inject/version"
   ...
 
@@ -114,8 +115,8 @@ Here's how your `project.clj` should be arranged to achive the three steps descr
   ;; inject values into your application.
   ;; 
   ;; You'll notice the use of the substitution key "lein-git-inject/version".  
-  ;; At build time, this middleware will replace that keyword with a git-derived 
-  ;; value. In turn, that value is used within a `:clojure-define` to place
+  ;; At build time, this middleware will replace that keyword with the constructed
+  ;; version. In turn, that value is used within a `:clojure-define` to place
   ;; it into a `def` (called `version` within the namespace `some.namespace`). 
   :shadow-cljs {:builds {:app {:target :browser
                                :release {:compiler-options {:closure-defines {some.namespace.version  "lein-git-inject/version"}}}}}}
@@ -126,13 +127,17 @@ Here's how your `project.clj` should be arranged to achive the three steps descr
   :release-tasks [["vcs" "assert-committed"]
                   ["deploy"]]
 
-  ;; Optional configuration which specifies how to "derive" the "version" from the git content.
+  ;; Optional configuration 
   :git-inject {
-    ;; Optional: you may customize the patterns used to extract versions from
+    ;; Optional: you can  customize the pattern used to recognise tags which
+    ;; relatre to versions. extract versions from
     ;; tags like below. Note only ahead (or ignore-ahead?) and dirty
     ;; (or ignore-dirty?) state is used to choose between release or snapshot
     ;; versions. The below patterns simply extract values from the tag to be
     ;; injected.
+
+XXX Issac default??
+XXX searches backwards??
     :version-pattern  #"version\/(.*)" }
 )
 ```
