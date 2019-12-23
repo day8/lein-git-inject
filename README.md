@@ -8,8 +8,8 @@
 
 # lein-git-inject
 
-Normally, when using Leiningen, the `version` of an application or library can be found by 
-impecting the `project.clj` and locating the 2nd argument of `defproject`: 
+When using Leiningen, the `version` of an application or library is found by 
+inspecting the `project.clj` and locating the 2nd argument of `defproject`: 
 ```
 (defproject day8/my-app-name "23.4.5"    ;;  <--- "23.4.5" is the version
    ...)
@@ -18,48 +18,51 @@ impecting the `project.clj` and locating the 2nd argument of `defproject`:
 This Leiningen middleware allows you to:
    1. construct the `version` from ***the ambient git context*** at ***build time*** and, specifically, from the latest git tag.
    2. alter the lein `defproject` to use this constructed `version` in the build process
-   3. optionally, embed this `version` value within your ClojureScript application for purposes like logging 
+   3. optionally, embed this `version` value within your ClojureScript application, for purposes like logging 
    4. optionally, embed certain other ambient build-time values (like a timestamp) into your ClojureScript application
 
-Regarding points 3 and 4, your application will contain one or more `goog-defines`s and they will be bound to the build-time values.
+Regarding points 3 and 4, your application will contain one or more `def`s and they will be bound to these build-time values.
 
 ## A Git Backgrounder 
 
-Assume for a minute that you are at the commandline in a git repo, and you type:
+You are at the command line in a git repo, and you execute:
 ```sh
 $ git describe --tags --dirty=-dirty
 ```
-you will see a string response like:
+and you will see the output:
 ```sh
 v1.0.4-3-g975b-dirty
 ```
-which is a string that encodes four (hyphen separated) pieces of information which we refer to as "the ambient git context":
+That output encodes four (hyphen separated) pieces of data which we refer to as "the ambient git context":
   - the latest tag: "v1.0.4"
   - the number of commits you are "ahead" of that latest tag: "3" 
   - the short ref (SHA) for the commit referenced by that latest tag: "g975b"
   - an indication that there are uncommitted changes: "dirty"  (or absent)
   
 This utility will construct a `version` from these values, at build time, using two rules:
-  - when the "ahead" count is 0, and the repo is not dirty, the tag itself supplies the `version`
+  - when the "ahead" count is 0, and the repo is not dirty, the `version` will be the tag (eg: `1.0.4`)
   - when the "ahead" count is non-zero, or the repo is dirty, the `version` will be the tag suffixed with `-<ahead-count>-<short-ref>-SNAPSHOT`; e.g. `1.0.4-3-g975b-SNAPSHOT`
   
 ## Latest Tag?
 
-Above, we said a `version` will be constructed using the "latest tag" but that's an approximately useful white lie, to initially facilitate understanding.  
+Above, we said a `version` will be constructed using the "latest tag" but that's an approximately useful white lie, to initially facilitate understanding.
 
-The full truth in note form is:
+The full truth is:
   1. what's used is the latest "version tag" found in the commit history 
   2. by default, a "version tag" is any tag which matches the regex: `#"^version\/(\d+\.\d+\.\d+)$"`
-  3. So your tags will look like this:  `version/1.2.3`  (that's `version/` followed by a semver)
-  4. You can, optionally, override this regex with your own (see below) to define version tags differently.
-  5. This middleware will inspect the current branch's history for tags and find the latest one which matches the regex, and it is THAT tag which used, and it is that tag against which the "ahead count" will be calculated, etc.
-  6. If no matching tag is found then the "version" constructed will be `version-unavailable`
-  7. It the git commandline in not available, then the version constructed will be `version-unavailable`
-  8. This approach does have one potential dark/confusing side. If you mispelled your tag `ersion/1.2.3`,
-the regex won't match, the tag will be ignored, and an earlier tag will be used. Which is bad. To guard against this, you might want to add a trigger in your repo to verify/assert that any tags added conform to a small set of cases like `version/*` or `doc/.*`.
+  3. So you will be creating tags which look like this: `version/1.2.3`  (that's `version/` followed by a semver)
+  4. You can, optionally, override this regex with your own (see below) to specify a different structure for your version tags
+  5. This middleware will inspect the current branch's history for tags and will find the latest one which matches the regex, and it is THAT tag which used, and it is that tag against which the "ahead count" will be calculated, etc.
+  
+Sharp edges to be aware of:
+  - if no matching tag is found then the "version" constructed will be `version-unavailable`
+  - if the `git` command line is not available, then the version constructed will be `version-unavailable`
+  - this approach does have one potential dark/confusing side which you'll probably want to guard against. If you misspelled your tag `ersion/1.2.3`,
+the regex won't match, the tag will be ignored, and an earlier tag will be used. Which is bad. To guard against this, you'll want to add a trigger in your repo to verify/assert that any tags added conform to a small set of cases like `version/*` or `doc/.*`. See github actions. 
+  - `lein release` will massage your `project.clj` in unwanted ways unless you take some action (see the example below)
 
 
-## How It Works
+## Three Steps
 
 The entire process has three steps, and this middleware handles the first two of them. 
 
@@ -69,11 +72,11 @@ of your `defproject` (within your `project.clj` file).
 
 ***First***, it will construct a `version` value from the ambient git context using the two "construction rules" above.
 
-***Second***, it will preform a search and replace on the `EDN` in 
+***Second***, it will perform a search and replace on the `EDN` in 
 the `defproject`.  It searches for
 four special strings - referred to as `substitution keys` - 
 and, when it finds one of them, it replaces that key with the associated 
-value from the build context.  In particular, it replaces any occurance of the 
+value from the build context.  In particular, it replaces any occurrence of the 
 substitution key `"lein-git-inject/version"` with the `version` constructed in step 1.
 
 ***Third***, if you are compiling using a tool like shadow-clj, you can use the 
@@ -81,10 +84,6 @@ substitution key `"lein-git-inject/version"` with the `version` constructed in s
 `defproject` itself into `def`s within your application, making those values 
 available at run time for purposes like logging.
 
-
-## Version Tags 
-
-In step 1. Above I ta
 
 ## The Four Substitution Keys 
 
@@ -112,9 +111,9 @@ decided to not support keyword keys, only strings, even though keywords seems li
 And it is better if there is only be one way to do something. 
 
 
-## How To Use It
+## Example
 
-Here's how your `project.clj` should be arranged to achive the three steps described above ...
+Here's how your `project.clj` should be arranged to achieve the three steps described above ...
 
 ```clojure
 
@@ -172,3 +171,5 @@ Derived from lein-git-version © 2016 Colin Steele
 Derived from lein-git-version © 2011 Michał Marczyk
 
 Distributed under the Eclipse Public License, the same as Clojure.
+
+
