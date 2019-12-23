@@ -146,12 +146,15 @@ Here's how your `project.clj` should be arranged to achieve the three steps desc
                   ["deploy"]]
 
   ;; Optional configuration 
-  ;; If you want to use your own regex to identify version tags. 
-  ;; Remember that git won't allow you to use ":" in a reference
-  ;; Note: the regex you supply should "match" the tag and it would also 
-  ;; return a match group which is the actual tag to use.
+  ;; If you want to use your own regex to identify version tags you can supply it. 
+  ;; When designing your tag structure, remember that that git tags are git references 
+  ;; and follow the rules about well formedness. Eg: no ":". See https://git-scm.com/docs/git-check-ref-format
+  ;; Note: the regex you supply should: 
+  ;;  - "match" a version tag and 
+  ;;  - it should return one capturing group which extracts the actual version to use. In the example below, 
+  ;;    the regex will match the tag "v/1.2.3" but it will capture the "1.2.3" part as the version. 
   :git-inject {
-    :version-pattern  #"$v\/(.*)" }
+    :version-pattern  #"^v\/(.*)" }
 )
 ```
 
