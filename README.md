@@ -8,7 +8,7 @@
 
 # lein-git-inject
 
-Normally, Leiningen projects give an explicit `version` as the 2nd argument to `defproject` 
+Normally, Leiningen projects provide an explicit `version` as the 2nd argument to `defproject` 
 (within the `project.clj` file), like this: 
 ```
 (defproject my-app "3.4.5"    ;;  <--- "3.4.5" is the version
@@ -17,10 +17,10 @@ Normally, Leiningen projects give an explicit `version` as the 2nd argument to `
 
 This Leiningen middleware changes how the `version` is obtained: 
    1. it constructs a `version` from ***the ambient git context*** at ***build time***
-   2. it alters the lein `defproject` to use this constructed `version` in the build process
+   2. you can then embed this constructed `version` within the `defproject`, again at build time 
    
-As an added bonus, it also, optionally, facilitates the embedding of this `version` (along with other built-time values) 
-within your applications for purposes like run-time logging. 
+As an added bonus, it also facilitates embedding this `version` (and certain other built-time values) 
+within your application, for purposes like run-time logging. 
 
 ## A Git Backgrounder 
 
@@ -44,21 +44,21 @@ This middleware will construct a `version` from these four values, at build-time
 
 ## Latest Tag?
 
-So far we have said that a `version` is constructed using the "latest tag". While that's often true, it is not the full story. 
+So far, we have said that a `version` is constructed using the "latest tag". While that's often true, it is not the full story. 
 
 The full truth is: 
   1. what's used is the latest "version tag" found in the commit history
   2. where a "version tag" is a tag with a specific textual structure
-  3. that textual structure must matche the regex: `#"^version\/(\d+\.\d+\.\d+)$"`.
-  3. so, one of these "version tags" might look like: `version/1.2.3`  (a string `version/` followed by a semver)
+  3. that textual structure must matche the regex: `#"^version\/(\d+\.\d+\.\d+)$"`
+  3. so, one of these "version tags" might look like: `version/1.2.3`  (the string `version/` followed by a semver)
   4. you can override this default regex with your own which will recognise your own, alternative structure (see how below)
   
 So, this middleware will traverse backwards the history of the current commit looking for a tag which has the right structure (matches the regex), and when it finds one, it is THAT tag which is used to construct a version - it is that tag against which the "ahead count" will be calculated, etc.
   
 Sharp edges to be aware of:
   - if no matching tag is found then the "version" constructed will be `version-unavailable`
-  - this middleware obtains the "ambient git context" by shelling out to the `git` executable. If this executable is not in the PATH, then you'll see messages on stderr and the `version` constructed will be `version-unavailable`
-  - this design does have one potential dark/confusing side which you'll probably want to guard against: misspelling your tag. Let's say you tag with `ersion/1.2.3` (can you see the typo?) which means the regex won't match, the tag will be ignored, and an earlier tag (without a typo) will be used. Which is not what you intended. And that's bad. To guard against this, you'll want to add a trigger (Github action ?) to  your repo to verify/assert that any tags added conform to a small set of allowable cases like `version/*` or `doc/.*`.  That way any mispelling will be flagged because the tag would fail to match an acceptable, known syructure. Something like that.
+  - this middleware obtains the "ambient git context" by shelling out to the `git` executable. If this executable is not in the PATH, then you'll see messages on `stderr` and the `version` constructed will be `version-unavailable`
+  - this design does have one potential dark/confusing side which you'll probably want to guard against: misspelling your tag. Let's say you tag with `ersion/1.2.3` (can you see the typo?) which means the regex won't match, the tag will be ignored, and an earlier tag (without a typo) will be used. Which is not what you intended. And that's bad. To guard against this, you'll want to add a trigger (Github Action ?) to  your repo to verify/assert that any tags added conform to a small set of allowable cases like `version/*` or `doc/.*`.  That way any mispelling will be flagged because the tag would fail to match an acceptable, known syructure. Something like that.
   - `lein release` will massage the `version` in your `project.clj` in unwanted ways unless you take some action (see the "Example" below regarding how to avoid this unwanted behaviour) 
 
 ## The Three Steps
@@ -69,7 +69,7 @@ As you read these three steps, keep in mind that Leiningen middleware runs
 very early in the Lein build pipeline. So early, in fact, that it can alter the `EDN` 
 of your `defproject` (within your `project.clj` file).
 
-***First***, it will construct a `version` value from the ambient git context using the two "construction rules" above.
+***First***, it will construct a `version` value from the "ambient git context" using the two "construction rules" above.
 
 ***Second***, it will perform a search and replace on the `EDN` in 
 the `defproject`.  It searches for
