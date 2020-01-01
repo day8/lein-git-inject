@@ -10,6 +10,8 @@
 
   :middleware   [leiningen.git-inject/middleware]
 
+  :git-inject   {:version-pattern #"v(\d+\.\d+\.\d+)"}
+
   :release-tasks [["vcs" "assert-committed"]
                   ["deploy" "clojars"]]
 

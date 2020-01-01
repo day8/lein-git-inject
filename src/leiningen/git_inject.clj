@@ -38,25 +38,42 @@
         :else
         (throw (IllegalArgumentException. (str "lein-git-inject " label " requires a string or a java.util.regex.Pattern!")))))
 
-(defn parse-tag-list
-  "Used to parse the output of git tag --list --merged=HEAD --sort=-taggerdate.
-
-   Returns the most recent tag by tagger date (not committer date!) that matches
-   version-pattern, otherwise nil."
-  [{:keys [version-pattern] :as config} out]
-  (let [pattern (ensure-pattern version-pattern ":version-pattern")]
-    (first (filter #(re-matches pattern %) (string/split-lines out)))))
-
-(defn tag-list
+(defn initial-commit
   [{:keys [git] :as config}]
-  (let [{:keys [exit out] :as child} (apply sh [git "tag" "--merged=HEAD" "--sort=-taggerdate"])]
+  (let [{:keys [exit out] :as child} (apply sh [git "rev-list" "--max-parents=0" "HEAD"])]
     (if-not (= exit 0)
       (binding [*out* *err*]
         (printf "Warning: lein-git-inject git exited %d\n%s\n\n"
                 exit child)
         (.flush *out*)
         nil)
-      (parse-tag-list config (string/trim out)))))
+      (string/trim out))))
+
+(defn parse-tags
+  [config out]
+  (reduce
+    (fn [ret line]
+      (if-let [[_ _ tag _] (re-find #"[0-9a-fA-F]{7} \(([^,]*, )*tag: ([0-9a-zA-Z`!@#$%&()-_+={}|;'<>,./]+)(, .*)*\) .*" line)]
+        (conj ret tag)
+        ret))
+    []
+    (string/split-lines (string/trim out))))
+
+(defn tags
+  [{:keys [git] :as config}]
+  (let [{:keys [exit out] :as child} (apply sh [git "log" "--oneline" "--decorate" "--simplify-by-decoration" "--ancestry-path" (str (initial-commit config) "..HEAD")])]
+    (if-not (= exit 0)
+      (binding [*out* *err*]
+        (printf "Warning: lein-git-inject git exited %d\n%s\n\n"
+                exit child)
+        (.flush *out*)
+        nil)
+      (parse-tags config out))))
+
+(defn latest-version-tag
+  [{:keys [version-pattern] :as config}]
+  (let [pattern (ensure-pattern version-pattern ":version-pattern")]
+    (first (filter #(re-matches pattern %) (tags config)))))
 
 (defn resolve-ref
   "Fetches the git ref of ref, being a tag or ref name."
@@ -101,10 +118,10 @@
   Returns a map `{:tag, :ahead, :ahead?, :ref, :ref-short, :dirty?}`
   if the pattern matches, otherwise returns the empty map."
   [{:keys [git] :as config}]
-  (let [most-recent-version-tag (tag-list config)]
-    (if-not most-recent-version-tag
+  (let [version-tag (latest-version-tag config)]
+    (if-not version-tag
       {}
-      (let [{:keys [exit out] :as child} (apply sh [git "describe" "--tags" "--dirty" "--long" "--match" most-recent-version-tag])]
+      (let [{:keys [exit out] :as child} (apply sh [git "describe" "--tags" "--dirty" "--long" "--match" version-tag])]
         (if-not (= exit 0)
           (binding [*out* *err*]
             (printf "Warning: lein-git-inject git exited %d\n%s\n\n"
