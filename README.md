@@ -16,7 +16,7 @@ Normally, Leiningen projects provide an explicit `version` as the 2nd argument t
 ```
 
 This Leiningen middleware changes how the `version` is obtained: 
-   1. it creates a `version` from ***the ambient git context*** at ***build time***  (hereafter called `the constructed version`)
+   1. it creates a version from ***the ambient git context*** at ***build time***  (hereafter called `the constructed version`)
    2. you can then embed `the constructed version` within the `defproject`, again at build time 
    
 As an added bonus, it also facilitates embedding `the constructed version` (and certain other built-time values) 
