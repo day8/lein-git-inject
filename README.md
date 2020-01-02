@@ -15,18 +15,18 @@ Normally, Leiningen projects provide an explicit `version` as the 2nd argument t
    ...)
 ```
 
-This Leiningen middleware changes how `version` is nominated. Your `defproject` will look like this:
+This Leiningen middleware changes how `version` is nominated. Your `defproject` will, instead, look like this:
 ```clj
 (defproject my-app "lein-git-inject/version"
    ...)
 ```
-Note the placeholder string "lein-git-inject/version" where an explicit version would normally be expected.
+You'll note there's a placeholder string, "lein-git-inject/version", where an explicit version would normally be expected.
 
 At build time, this middleware will:
-   1. create a "version" from ***the ambient git context***. From now on, we'll refer to this as `the constructed version`.
+   1. use ***a method*** to create a "version" derived from ***the ambient git context*** and, in particular, the ***latest git tag***. We refer to this as `the constructed version`.
    2. replace the placeholder string "lein-git-inject/version" with `the constructed version`
    
-As an added bonus, it also facilitates embedding `the constructed version` (and certain other built-time values) 
+As an added bonus, it also facilitates embedding `the constructed version` (and certain other build-time values) 
 within your application, making it readily available at run-time for purposes like logging.
 
 ## The Ambient Git Context
@@ -35,7 +35,7 @@ Imagine you are at the command line in a git repo, and you execute:
 ```sh
 $ git describe --tags --dirty=-dirty
 ```
-which will output something similar to:
+It will output something similar to:
 ```sh
 v1.0.4-3-g975b-dirty
 ```
@@ -44,9 +44,11 @@ which encodes four (hyphen separated) pieces of data which we refer to as "the a
   - the number of commits the repo is currently "ahead" of that latest tag: "3" 
   - the short ref (SHA) for the commit referenced by that latest tag: "g975b"
   - an indication that there are uncommitted changes: "dirty"  (or absent)
+  
+## The Method
 
-This middleware will create `the constructed version` from these four values, at build-time, using two rules:
-  - when the "ahead" count is 0, and the repo is not dirty, `the constructed version` will be the tag (eg: `1.0.4`)
+This middleware creates `the constructed version` from the four values in "the ambient git context", using two rules:
+  - when the "ahead" count is 0, and the repo is not dirty, `the constructed version` will just be the latest tag (eg: `1.0.4`)
   - when the "ahead" count is non-zero, or the repo is dirty, `the constructed version` will be the tag suffixed with `-<ahead-count>-<short-ref>-SNAPSHOT`, e.g. `1.0.4-3-g975b-SNAPSHOT`
 
 ## Latest Tag?
@@ -77,7 +79,7 @@ As you read these three steps, keep in mind that Leiningen middleware runs
 very early in the Lein build pipeline. So early, in fact, that it can alter the `EDN` 
 of your `defproject` (within your `project.clj` file).
 
-***First***, it will create `the constructed version` from the "ambient git context", using the two "construction rules" detailed above.
+***First***, it will create `the constructed version` from the "ambient git context", using "the method" detailed above.
 
 ***Second***, it will perform a search and replace on the `EDN` in 
 the `defproject`.  It searches for
@@ -126,7 +128,7 @@ Here's how to write your `project.clj` to achieve the three steps described abov
 
 ;; On the next line, note that the version (2nd argument of defproject) is a 
 ;; substitution key which will be replaced by `the constructed version` which is
-;; built from the ambient git context, using the two rules.
+;; built from `the ambient git context`, using `the method`.
 (defproject day8/lein-git-inject-example "lein-git-inject/version"
   ...
 
