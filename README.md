@@ -15,19 +15,19 @@ Normally, Leiningen projects provide an explicit `version` as the 2nd argument t
    ...)
 ```
 
-This Leiningen middleware changes how `version` is nominated. Your `defproject` will now look like this:
+This Leiningen middleware changes how `version` is nominated. Your `defproject` will look like this:
 ```clj
 (defproject my-app "lein-git-inject/version"
    ...)
 ```
-Notice the placeholder string "lein-git-inject/version", where an explicit version would normally be found.
+Note the placeholder string "lein-git-inject/version" where an explicit version would normally be expected.
 
 At build time, this middleware will:
-   1. create a "version" from ***the ambient git context*** (hereafter called `the constructed version`)
-   2. replace the placeholder string "lein-git-inject/version" with this `constructed version`
+   1. create a "version" from ***the ambient git context***. From now on, we'll refer to this as `the constructed version`.
+   2. replace the placeholder string "lein-git-inject/version" with `the constructed version`
    
 As an added bonus, it also facilitates embedding `the constructed version` (and certain other built-time values) 
-within your application, for purposes like run-time logging. 
+into your application, making it available for purposes like run-time logging.
 
 ## A Git Backgrounder 
 
