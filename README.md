@@ -64,8 +64,8 @@ The full truth is:
 So, this middleware will traverse backwards through the history of the current commit looking for a tag which has the right structure (matches the regex), and when it finds one, it is THAT tag which is used to create `the constructed version` - it is that tag against which the "ahead count" will be calculated, etc.
   
 Some sharp edges you should be aware of:
-  - if no matching tag is found then `the constructed version` will be `version-unavailable`
-  - this middleware obtains the "ambient git context" by shelling out to the `git` executable. If this executable is not in the PATH, then you'll see messages on `stderr` and `the constructed version` will be `version-unavailable`
+  - if no matching tag is found then `the constructed version` will be `git-version-tag-not-found`
+  - this middleware obtains the "ambient git context" by shelling out to the `git` executable. If this executable is not in the PATH, then you'll see messages on `stderr` and `the constructed version` will be `git-command-not-found`
   - this design has one potential dark/confusing side which you'll probably want to guard against: misspelling your tag. Let's say you tag with `ersion/1.2.3` (can you see the typo?) which means the regex won't match, the tag will be ignored, and an earlier version tag (one without a typo) will be used. Which is not what you intended. And that's bad. To guard against this, you'll want to add a trigger (GitHub Action ?) to  your repo to verify/assert that any tags added conform to a small set of allowable cases like `version/*` or `doc/.*`.  That way any misspelling will be flagged because the tag would fail to match an acceptable, known structure. Something like that
   - `lein release` will massage the `version` in your `project.clj` in unwanted ways unless you take some action (see the "Example" below regarding how to avoid this unwanted behaviour) 
 

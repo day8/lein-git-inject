@@ -136,7 +136,7 @@
     (let [{:keys [tag ahead ahead? dirty? ref-short]} (describe config)]
       (if-not (string? tag)
         ;; If git status is nil (e.g. IntelliJ evaluating project.clj):
-        "version-unavailable"
+        "git-version-tag-not-found"
         (let [[_ version] (re-find version-pattern tag)]
           (if (and (not ahead?)
                    (not dirty?))
@@ -145,7 +145,7 @@
             (str version "-" ahead "-" ref-short "-SNAPSHOT")))))
     (catch IOException _
       ;; If git binary is not available (e.g. not in path):
-      "git-unavailable")))
+      "git-command-not-found")))
 
 (def x->f
   {:lein-git-inject/build-iso-date-time (fn [_] (.format (LocalDateTime/now) DateTimeFormatter/ISO_DATE_TIME))
