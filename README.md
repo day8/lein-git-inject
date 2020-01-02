@@ -16,10 +16,10 @@ Normally, Leiningen projects provide an explicit `version` as the 2nd argument t
 ```
 
 This Leiningen middleware changes how the `version` is obtained: 
-   1. it constructs a `version` from ***the ambient git context*** at ***build time***
-   2. you can then embed this constructed `version` within the `defproject`, again at build time 
+   1. it creates a `version` from ***the ambient git context*** at ***build time***  (hereafter called `the constructed version`)
+   2. you can then embed `the constructed version` within the `defproject`, again at build time 
    
-As an added bonus, it also facilitates embedding this `version` (and certain other built-time values) 
+As an added bonus, it also facilitates embedding `the constructed version` (and certain other built-time values) 
 within your application, for purposes like run-time logging. 
 
 ## A Git Backgrounder 
@@ -38,13 +38,13 @@ which encodes four (hyphen separated) pieces of data which we refer to as "the a
   - the short ref (SHA) for the commit referenced by that latest tag: "g975b"
   - an indication that there are uncommitted changes: "dirty"  (or absent)
 
-This middleware will construct a `version` from these four values, at build-time, using two rules:
-  - when the "ahead" count is 0, and the repo is not dirty, the `version` will be the tag (eg: `1.0.4`)
-  - when the "ahead" count is non-zero, or the repo is dirty, the `version` will be the tag suffixed with `-<ahead-count>-<short-ref>-SNAPSHOT`, e.g. `1.0.4-3-g975b-SNAPSHOT`
+This middleware will construct `the constructed version` from these four values, at build-time, using two rules:
+  - when the "ahead" count is 0, and the repo is not dirty, `the constructed version` will be the tag (eg: `1.0.4`)
+  - when the "ahead" count is non-zero, or the repo is dirty, `the constructed version` will be the tag suffixed with `-<ahead-count>-<short-ref>-SNAPSHOT`, e.g. `1.0.4-3-g975b-SNAPSHOT`
 
 ## Latest Tag?
 
-So far, we have said that a `version` is constructed using the "latest tag". While that's often true, it is not the full story. 
+So far, we have said that `the constructed version` is made using the "latest tag". While that's often true, it is not the full story. 
 
 The full truth is: 
   1. what's used is the latest "version tag" found in the commit history
@@ -53,11 +53,11 @@ The full truth is:
   3. so, one of these "version tags" might look like: `version/1.2.3`  (the string `version/` followed by a semver)
   4. you can override this default regex with your own which will recognise your own, alternative structure (see how below)
   
-So, this middleware will traverse backwards the history of the current commit looking for a tag which has the right structure (matches the regex), and when it finds one, it is THAT tag which is used to construct a version - it is that tag against which the "ahead count" will be calculated, etc.
+So, this middleware will traverse backwards the history of the current commit looking for a tag which has the right structure (matches the regex), and when it finds one, it is THAT tag which is used to create `the constructed version` - it is that tag against which the "ahead count" will be calculated, etc.
   
 Sharp edges to be aware of:
-  - if no matching tag is found then the "version" constructed will be `version-unavailable`
-  - this middleware obtains the "ambient git context" by shelling out to the `git` executable. If this executable is not in the PATH, then you'll see messages on `stderr` and the `version` constructed will be `version-unavailable`
+  - if no matching tag is found then `the constructed version` will be `version-unavailable`
+  - this middleware obtains the "ambient git context" by shelling out to the `git` executable. If this executable is not in the PATH, then you'll see messages on `stderr` and `the constructed version` will be `version-unavailable`
   - this design does have one potential dark/confusing side which you'll probably want to guard against: misspelling your tag. Let's say you tag with `ersion/1.2.3` (can you see the typo?) which means the regex won't match, the tag will be ignored, and an earlier tag (without a typo) will be used. Which is not what you intended. And that's bad. To guard against this, you'll want to add a trigger (Github Action ?) to  your repo to verify/assert that any tags added conform to a small set of allowable cases like `version/*` or `doc/.*`.  That way any mispelling will be flagged because the tag would fail to match an acceptable, known syructure. Something like that.
   - `lein release` will massage the `version` in your `project.clj` in unwanted ways unless you take some action (see the "Example" below regarding how to avoid this unwanted behaviour) 
 
@@ -69,7 +69,7 @@ As you read these three steps, keep in mind that Leiningen middleware runs
 very early in the Lein build pipeline. So early, in fact, that it can alter the `EDN` 
 of your `defproject` (within your `project.clj` file).
 
-***First***, it will construct a `version` value from the "ambient git context" using the two "construction rules" above.
+***First***, it will create `the constructed version` from the "ambient git context", using the two "construction rules" detailed above.
 
 ***Second***, it will perform a search and replace on the `EDN` in 
 the `defproject`.  It searches for
@@ -117,7 +117,7 @@ Here's how to write your `project.clj` to achieve the three steps described abov
 ```clojure
 
 ;; On the next line, note that the version (2nd argument of defproject) is a 
-;; substitution key which will be replaced by the "constructed version" which is
+;; substitution key which will be replaced by `the constructed version` which is
 ;; built from the ambient git context, using the two rules.
 (defproject day8/lein-git-inject-example "lein-git-inject/version"
   ...
@@ -134,8 +134,8 @@ Here's how to write your `project.clj` to achieve the three steps described abov
   ;; inject values into your application.
   ;; 
   ;; You'll notice the use of the substitution key "lein-git-inject/version".  
-  ;; At build time, this middleware will replace that keyword with the constructed
-  ;; version. In turn, that value is used within a `:clojure-define` to place
+  ;; At build time, this middleware will replace that keyword with `the constructed version`.
+  ;; In turn, that value is used within a `:clojure-define` to place
   ;; it into a `def` (called `version` within the namespace `some.namespace`). 
   :shadow-cljs {:builds {:app {:target :browser
                                :release {:compiler-options {:closure-defines {some.namespace.version  "lein-git-inject/version"}}}}}}
@@ -147,13 +147,14 @@ Here's how to write your `project.clj` to achieve the three steps described abov
                   ["deploy"]]
 
   ;; Optional configuration 
-  ;; If you want to use your own regex to identify version tags you can supply it. 
+  ;; If you wish to supply an alternative regex to identify `version tags`, here's where you do it.
   ;; When designing your tag structure, remember that that git tags are git references 
   ;; and follow the rules about well formedness. Eg: no ":". See https://git-scm.com/docs/git-check-ref-format
-  ;; Note: the regex you supply should: 
-  ;;  - "match" a version tag and 
-  ;;  - it should return one capturing group which extracts the actual version to use. In the example below, 
-  ;;    the regex will match the tag "v/1.2.3" but it will capture the "1.2.3" part as the version. 
+  ;; Note: the regex you supply has two jobs:
+  ;;  1. "match" a version tag and 
+  ;;  2. return one capturing group which extracts the actual version to use. In the example below, 
+  ;;    the regex will match the tag "v/1.2.3" but it will capture the "1.2.3" part and it is THAT
+  ;;    w2hich will be used as the version. 
   :git-inject {
     :version-pattern  #"^v\/(.*)" }
 )
