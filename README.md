@@ -27,9 +27,9 @@ At build time, this middleware will:
    2. replace the placeholder string "lein-git-inject/version" with `the constructed version`
    
 As an added bonus, it also facilitates embedding `the constructed version` (and certain other built-time values) 
-into your application, making it available for purposes like run-time logging.
+within your application, making it readily available at run-time for purposes like logging.
 
-## A Git Backgrounder 
+## The Ambient Git Context
 
 Imagine you are at the command line in a git repo, and you execute:
 ```sh
@@ -45,7 +45,7 @@ which encodes four (hyphen separated) pieces of data which we refer to as "the a
   - the short ref (SHA) for the commit referenced by that latest tag: "g975b"
   - an indication that there are uncommitted changes: "dirty"  (or absent)
 
-This middleware will construct `the constructed version` from these four values, at build-time, using two rules:
+This middleware will create `the constructed version` from these four values, at build-time, using two rules:
   - when the "ahead" count is 0, and the repo is not dirty, `the constructed version` will be the tag (eg: `1.0.4`)
   - when the "ahead" count is non-zero, or the repo is dirty, `the constructed version` will be the tag suffixed with `-<ahead-count>-<short-ref>-SNAPSHOT`, e.g. `1.0.4-3-g975b-SNAPSHOT`
 
@@ -57,15 +57,16 @@ The full truth is:
   1. what's used is not the latest tag, but instead the latest "version tag" found in the commit history
   2. where a "version tag" is a tag with a specific textual structure
   3. that textual structure must match the regex: `#"^version\/(\d+\.\d+\.\d+)$"`
-  3. so, one of these "version tags" might look like: `version/1.2.3`  (the string `version/` followed by a semver, `N.N.N`)
-  4. you can override this default regex with your own which will recognise an alternative textual structure (see how below)
+  4. so, one of these "version tags" might look like: `version/1.2.3`  (the string `version/` followed by a semver, `N.N.N`)
+  5. tags which do not match the regex are ignored 
+  6. you can override this default regex with your own which will recognise an alternative textual structure (see how below)
   
 So, this middleware will traverse backwards through the history of the current commit looking for a tag which has the right structure (matches the regex), and when it finds one, it is THAT tag which is used to create `the constructed version` - it is that tag against which the "ahead count" will be calculated, etc.
   
 Some sharp edges you should be aware of:
   - if no matching tag is found then `the constructed version` will be `version-unavailable`
   - this middleware obtains the "ambient git context" by shelling out to the `git` executable. If this executable is not in the PATH, then you'll see messages on `stderr` and `the constructed version` will be `version-unavailable`
-  - this design does have one potential dark/confusing side which you'll probably want to guard against: misspelling your tag. Let's say you tag with `ersion/1.2.3` (can you see the typo?) which means the regex won't match, the tag will be ignored, and an earlier tag (without a typo) will be used. Which is not what you intended. And that's bad. To guard against this, you'll want to add a trigger (GitHub Action ?) to  your repo to verify/assert that any tags added conform to a small set of allowable cases like `version/*` or `doc/.*`.  That way any misspelling will be flagged because the tag would fail to match an acceptable, known structure. Something like that
+  - this design has one potential dark/confusing side which you'll probably want to guard against: misspelling your tag. Let's say you tag with `ersion/1.2.3` (can you see the typo?) which means the regex won't match, the tag will be ignored, and an earlier version tag (one without a typo) will be used. Which is not what you intended. And that's bad. To guard against this, you'll want to add a trigger (GitHub Action ?) to  your repo to verify/assert that any tags added conform to a small set of allowable cases like `version/*` or `doc/.*`.  That way any misspelling will be flagged because the tag would fail to match an acceptable, known structure. Something like that
   - `lein release` will massage the `version` in your `project.clj` in unwanted ways unless you take some action (see the "Example" below regarding how to avoid this unwanted behaviour) 
 
 ## The Three Steps
