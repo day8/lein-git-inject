@@ -6,7 +6,7 @@
 
   :eval-in-leiningen true
 
-  :plugins      [[day8/lein-git-inject "0.0.4"]]
+  :plugins      [[day8/lein-git-inject "0.0.6"]]
 
   :middleware   [leiningen.git-inject/middleware]
 
