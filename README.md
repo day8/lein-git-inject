@@ -112,16 +112,16 @@ It will search for these strings:
 ***Note #1:*** To debug these substitutions, you can use `lein pprint` 
 to see the entire project map after the substitutions have taken place.
 
-***Note #2:*** Design decision: we deliberately choose keys to be strings (not keywords), 
-because, when you are using Cursive,
-you can't have 2nd argument to `defproject` (the version!) be a keyword.
-Only a string can go there
-because Cursive does some inspection of your `project.clj` ahead of any lein use. So, we
-decided to not support keyword keys, only strings, even though keywords seem like the idiomatic choice.
-And it is better if there is only one way to do something. 
+***Note #2:***  Substitution keys are strings, even though 
+keywords seem like the idiomatic choice. Why? Reason: when you are using Cursive,
+the 2nd argument to `defproject` (the version!) can't be a keyword. 
+Only a string can go there because Cursive does its own inspection of your `project.clj` 
+indepentently of Lein and it doesn't work if there is a keyword there. 
+So string keys were necessary. And there is less cognative load if there 
+is only one way to do something - so we reluctantly said "no" to allowing keyword keys too.
 
 
-## Example
+## Annotated Example
 
 Here's how to write your `project.clj` to achieve the three steps described above...
 
@@ -139,15 +139,15 @@ Here's how to write your `project.clj` to achieve the three steps described abov
   :middleware   [leiningen.git-inject/middleware]  ;; <-- you must include this middleware
   
   
-  ;; If you are using the shadow-clj compiler and lein-shadow the
-  ;; shadow-cljs configuration is in project.clj. Below is an example of how to 
+  ;; If you are using the shadow-clj compiler and lein-shadow, the shadow-cljs 
+  ;; configuration is put here in project.clj. Below is an example of how to 
   ;; combine this middleware with a `:clojure-define` in order to 
-  ;; inject values into your application.
+  ;; inject build-time values into your application, for later run-time use.
   ;; 
   ;; You'll notice the use of the substitution key "lein-git-inject/version".  
   ;; At build time, this middleware will replace that keyword with `the constructed version`.
-  ;; In turn, that value is used within a `:clojure-define` to place
-  ;; it into a `def` (called `version` within the namespace `some.namespace`). 
+  ;; In turn, that value is used within a `:clojure-define` to bind it
+  ;; to a var, via a `def` in your code (called `version` within the namespace `some.namespace`). 
   :shadow-cljs {:builds {:app {:target :browser
                                :release {:compiler-options {:closure-defines {some.namespace.version  "lein-git-inject/version"}}}}}}
 
@@ -158,16 +158,17 @@ Here's how to write your `project.clj` to achieve the three steps described abov
                   ["deploy"]]
 
   ;; Optional configuration 
-  ;; If you wish to supply an alternative regex to identify `version tags`, here's where you do it.
-  ;; When designing your tag structure, remember that that git tags are git references 
-  ;; and follow the rules about well formedness. Eg: no ":". See https://git-scm.com/docs/git-check-ref-format
-  ;; Note: the regex you supply has two jobs:
-  ;;  1. "match" a version tag and 
-  ;;  2. return one capturing group which extracts the actual version to use. In the example below, 
-  ;;    the regex will match the tag "v/1.2.3" but it will capture the "1.2.3" part and it is THAT
-  ;;    which will be used as the version. 
+  ;; Here is where you can supply an alternative regex to identify `version tags`. 
+  ;; When designing your own textual structure for "version tags", remember that 
+  ;; git tags are git references and that there are rules about well formedness. 
+  ;; For example, you can't have a ":" in a tag. See https://git-scm.com/docs/git-check-ref-format
+  ;; The regex you supply has two jobs:
+  ;;  1. to "match" a version tag 
+  ;;  2. to return one capturing group which extracts the text within the tag which is to 
+  ;;     be used as the version. In the example below, the regex will match the tag "v/1.2.3" 
+  ;;     but it will capture the "1.2.3" part and it is THAT part which will be used as the version. 
   :git-inject {
-    :version-pattern  #"^v\/(.*)" }
+    :version-pattern  #"^v\/(.*)$" }
 )
 ```
 
