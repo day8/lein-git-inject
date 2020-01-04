@@ -51,7 +51,7 @@ This middleware creates `the constructed version` from the four values in "the a
   1. when the "ahead" count is 0, and the repo is not dirty, `the constructed version` will just be the latest tag (eg: `1.0.4`)
   2. when the "ahead" count is non-zero, or the repo is dirty, `the constructed version` will be the tag suffixed with `-<ahead-count>-<short-ref>-SNAPSHOT`, e.g. `1.0.4-3-g975b-SNAPSHOT`
   
- ***Note:*** the attentive reader will notice that only part of the latest tag is used (`1.0.4` rather than `version/1.0.4`). More on this below.
+ ***Note:*** the attentive reader will notice that only part of the latest tag is used (`1.0.4` rather than `version/1.0.4`). This is explained within the next section. 
 
 ## Latest Tag?
 
