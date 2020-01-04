@@ -51,18 +51,18 @@ This middleware creates `the constructed version` from the four values in "the a
   1. when the "ahead" count is 0, and the repo is not dirty, `the constructed version` will just be the latest tag (eg: `1.0.4`)
   2. when the "ahead" count is non-zero, or the repo is dirty, `the constructed version` will be the tag suffixed with `-<ahead-count>-<short-ref>-SNAPSHOT`, e.g. `1.0.4-3-g975b-SNAPSHOT`
   
- ***Note:*** you'll notice that the version used is `1.0.4` rather than the full tag `version/1.0.4`. More on this below.
+ ***Note:*** the attentive reader will notice that only part of the latest tag is used (`1.0.4` rather than `version/1.0.4`). More on this below.
 
 ## Latest Tag?
 
-So far, we have said that `the constructed version` is created using the "latest tag". While that's often true, it is not the whole story, which is actually as follows. 
+So far, we have said that `the constructed version` is created using the "latest tag". While that's often true, it is not the whole story, which is actually as follows:
   1. what's used is the "latest version tag" found in the commit history
   2. where a "version tag" is a tag with a specific textual structure
   3. that textual structure must match the regex: `#"^version\/(\d+\.\d+\.\d+)$"`
   4. so, one of these "version tags" might look like: `version/1.2.3`  (the string `version/` followed by a semver, `N.N.N`)
-  5. tags which do not match the regex are ignored 
-  6. you can override this default regex with your own which will recognise an alternative textual structure (see how below)
-  7. You'll notice that the regex has a capturing group which extracts the semver part (N.N.N). If you provide your own regex, it must contain one capturing group to isolate that part of the tag which should be used in `the constructed version`.
+  5. tags which do not match the regex are ignored (which means you can use tags for other purposes, not just for nominating versions)
+  6. you can override this default regex with one of your own which will recognise an alternative textual structure (see how below)
+  7. you'll notice that the regex has a capturing group which extracts the semver part (N.N.N). If you provide your own regex, it must contain one capturing group which isolates that part of the tag to be used in `the constructed version`.
   
 So, this middleware will traverse backwards through the history of the current commit looking for a tag which has the right structure (matches the regex), and when it finds one, it is THAT tag which is used to create `the constructed version` - it is that tag against which the "ahead count" will be calculated, etc.
   
