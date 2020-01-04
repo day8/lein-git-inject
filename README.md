@@ -56,7 +56,7 @@ This middleware creates `the constructed version` from the four values in "the a
 ## Latest Tag?
 
 So far, we have said that `the constructed version` is created using the "latest tag". While that's often true, it is not the whole story, which is actually as follows:
-  1. what's used is the "latest version tag" found in the commit history
+  1. what's used is the "latest version tag" found in the commit history  (not the "latest tag")
   2. where a "version tag" is a tag with a specific textual structure
   3. that textual structure must match the regex: `#"^version\/(\d+\.\d+\.\d+)$"`
   4. so, one of these "version tags" might look like: `version/1.2.3`  (the string `version/` followed by a semver, `N.N.N`)
@@ -70,7 +70,7 @@ Some sharp edges you should be aware of:
   - if no matching tag is found then `the constructed version` will be `git-version-tag-not-found`
   - this middleware obtains the "ambient git context" by shelling out to the `git` executable. If this executable is not in the PATH, then you'll see messages on `stderr` and `the constructed version` will be `git-command-not-found`
   - this design has one potential dark/confusing side which you'll probably want to guard against: misspelling your tag. Let's say you tag with `ersion/1.2.3` (can you see the typo?) which means the regex won't match, the tag will be ignored, and an earlier version tag (one without a typo) will be used. Which is not what you intended. And that's bad. To guard against this, you'll want to add a trigger (GitHub Action ?) to  your repo to verify/assert that any tags added conform to a small set of allowable cases like `version/*` or `doc/.*`.  That way any misspelling will be flagged because the tag would fail to match an acceptable, known structure. Something like that
-  - `lein release` will massage the `version` in your `project.clj` in unwanted ways unless you take some action (see the "Example" below regarding how to avoid this unwanted behaviour) 
+  - `lein release` will massage the `version` in your `defproject` in unwanted ways unless you take specific actions to stop it (see the "Example" below) 
 
 ## The Three Steps
 
