@@ -8,7 +8,7 @@
 
 # lein-git-inject
 
-Normally, Leiningen projects provide an explicit `version` as the 2nd argument to `defproject` 
+Leiningen projects normally provide an explicit `version` as the 2nd argument to `defproject` 
 (within the `project.clj` file), like this: 
 ```clj
 (defproject my-app "3.4.5"    ;;  <--- "3.4.5" is the version
@@ -27,7 +27,7 @@ At build time, this middleware will:
    2. replace the placeholder string "lein-git-inject/version" with `the constructed version`
    
 As an added bonus, it also facilitates embedding `the constructed version` (and certain other build-time values) 
-within your application, making it readily available at run-time for purposes like logging.
+within your ClojureScript application, making it readily available at run-time for purposes like logging.
 
 ## The Ambient Git Context
 
