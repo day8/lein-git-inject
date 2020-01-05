@@ -59,7 +59,7 @@ This middleware creates `the computed version` from these four "ambient" values 
 So far, we have said that `the computed version` is created using the "latest tag". Now, while that's often true, it is not the whole story, which is actually as follows:
   1. what's used is the "latest version tag" found in the commit history  (not just the "latest tag")
   2. where a "version tag" is a tag with a specific textual structure
-  3. that textual structure must match the regex: `#"^version\/(\d+\.\d+\.\d+)$"`
+  3. by default, that textual structure must match the regex: `#"^version\/(\d+\.\d+\.\d+)$"`
   4. so, one of these "version tags" might look like: `version/1.2.3`  (the string `version/` followed by a semver, `N.N.N`)
   5. tags which do not match the regex are ignored (which means you can use tags for other purposes, not just for nominating versions)
   6. you can override this default regex with one of your own which will recognise an alternative textual structure (see how below)
