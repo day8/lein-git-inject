@@ -36,7 +36,7 @@ Imagine you are at the command line in a git repo, and you execute:
 ```sh
 $ git describe --tags --dirty=-dirty
 ```
-Assuming that the latest tag in your repo was `version/1.0.4`, this command might output something like:
+Assuming that the latest tag in your branch was `version/1.0.4`, this command might output something like:
 ```sh
 version/1.0.4-3-g975b-dirty
 ```
