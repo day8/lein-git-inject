@@ -8,7 +8,7 @@
 
 # lein-git-inject
 
-This Leiningen middleware computes "version" from the ***the ambient git context***  - specifically the branch's ***latest git tag***.
+This Leiningen middleware computes "version" from the ***the ambient git context***, with the branch's ***latest git tag*** playing a staring role.
 
 Normally, Leiningen projects explicitly provide `version` as the 2nd argument to `defproject` 
 (within the `project.clj` file), like this: 
