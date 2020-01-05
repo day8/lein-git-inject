@@ -15,7 +15,7 @@ Leiningen projects normally provide an explicit `version` as the 2nd argument to
    ...)
 ```
 
-This Leiningen middleware changes how `version` is obtained - it instead derives `version` from ***the ambient git context*** and, in particular, the ***latest git tag***.
+This Leiningen middleware instead derives `version` from ***the ambient git context*** and, in particular, the ***latest git tag***.
 
 Your `defproject` will nominate a placeholder string, "lein-git-inject/version", where normally an explicit version would be expected, like this: 
 ```clj
@@ -24,7 +24,7 @@ Your `defproject` will nominate a placeholder string, "lein-git-inject/version",
 ```
 
 Then, at build time, this middleware will:
-   1. use ***a method*** to derive the "version" from ***the ambient git context*** and, in particular, the ***latest git tag***. We refer to this as `the derived version`.
+   1. use ***a two-rule method*** to derive the "version" from ***the ambient git context***. We refer to this as `the derived version`.
    2. replace the placeholder string "lein-git-inject/version" with `the derived version`
    
 As an added bonus, it also facilitates embedding `the derived version` (and certain other build-time values) 
@@ -46,7 +46,7 @@ which encodes four (hyphen separated) values which we refer to as "the ambient g
   - the short ref (SHA) for the commit referenced by that latest tag: "g975b"
   - an indication that there are uncommitted changes: "dirty"  (or absent)
   
-## The Method
+## The Two-Rule Method
 
 This middleware creates `the derived version` from these four "ambient" values by applying two rules:
   1. when the "ahead" count is 0, and the repo is not dirty, `the derived version` will just be the latest tag (eg: `1.0.4`)
@@ -54,7 +54,7 @@ This middleware creates `the derived version` from these four "ambient" values b
   
  ***Note:*** the attentive reader will notice that only part of the latest tag is used (`1.0.4` rather than `version/1.0.4`). This is explained within the next section. 
 
-## Latest Tag?
+## The Latest Tag
 
 So far, we have said that `the derived version` is created using the "latest tag". While that's often true, it is not the whole story, which is actually as follows:
   1. what's used is the "latest version tag" found in the commit history  (not the "latest tag")
@@ -66,6 +66,8 @@ So far, we have said that `the derived version` is created using the "latest tag
   7. you'll notice that the regex has a capturing group which extracts the semver part (N.N.N). If you provide your own regex, it must contain one capturing group which isolates that part of the tag to be used in `the derived version`.
   
 So, this middleware will traverse backwards through the history of the current commit looking for a tag which has the right structure (matches the regex), and when it finds one, it is THAT tag which is used to create `the derived version` - it is that tag against which the "ahead count" will be calculated, etc.
+
+## Sharp Edges
   
 Some sharp edges you should be aware of:
   - if no matching tag is found then `the derived version` will be `git-version-tag-not-found`
@@ -73,7 +75,7 @@ Some sharp edges you should be aware of:
   - this design has one potential dark/confusing side which you'll probably want to guard against: misspelling your tag. Let's say you tag with `ersion/1.2.3` (can you see the typo?) which means the regex won't match, the tag will be ignored, and an earlier version tag (one without a typo) will be used. Which is not what you intended. And that's bad. To guard against this, you'll want to add a trigger (GitHub Action ?) to  your repo to verify/assert that any tags added conform to a small set of allowable cases like `version/*` or `doc/.*`.  That way any misspelling will be flagged because the tag would fail to match an acceptable, known structure. Something like that
   - `lein release` will massage the `version` in your `defproject` in unwanted ways unless you take specific actions to stop it (see the "Example" below) 
 
-## The Three Steps
+## Three Steps
 
 The entire process has three steps, and this middleware handles the first two of them. 
 
@@ -81,7 +83,7 @@ As you read these three steps, keep in mind that Leiningen middleware runs
 very early in the Lein build pipeline. So early, in fact, that it can alter the `EDN` 
 of your `defproject` (within your `project.clj` file).
 
-***First***, it will create `the derived version` from the "ambient git context", using "the method" detailed above.
+***First***, it will create `the derived version` from the "ambient git context", using "the two-rule method" detailed above.
 
 ***Second***, it will perform a search and replace on the `EDN` in 
 the `defproject`.  It searches for
@@ -122,7 +124,7 @@ So string keys were necessary. And there is less cognative load if there
 is only one way to do something - so we reluctantly said "no" to allowing keyword keys too.
 
 
-## Annotated Example
+## An Annotated Example
 
 Here's how to write your `project.clj` to achieve the three steps described above...
 
