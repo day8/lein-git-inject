@@ -8,26 +8,26 @@
 
 # lein-git-inject
 
-Leiningen projects normally provide an explicit `version` as the 2nd argument to `defproject` 
+This Leiningen middleware computes "version" from the ***the ambient git context***  - specifically the branch's ***latest git tag***.
+
+Leiningen projects normally explicit provide `version` as the 2nd argument to `defproject` 
 (within the `project.clj` file), like this: 
 ```clj
 (defproject my-app "3.4.5"    ;;  <--- "3.4.5" is the version
    ...)
 ```
 
-This Leiningen middleware instead derives `version` from ***the ambient git context*** and, in particular, the ***latest git tag***.
-
-Your `defproject` will nominate a placeholder string, "lein-git-inject/version", where normally an explicit version would be expected, like this: 
+When using this Leiningen middleware, your `defproject` will instead nominate a placeholder string, "lein-git-inject/version", where  the explicit version string would be expected, like this: 
 ```clj
 (defproject my-app "lein-git-inject/version"
    ...)
 ```
 
 Then, at build time, this middleware will:
-   1. use ***a two-rule method*** to derive the "version" from ***the ambient git context***. We refer to this as `the derived version`.
-   2. replace the placeholder string "lein-git-inject/version" with `the derived version`
+   1. use ***a two-rule method*** to compute the "version" from ***the ambient git context***. We refer to this as `the computed version`.
+   2. replace the placeholder string "lein-git-inject/version" with `the computed version`
    
-As an added bonus, it also facilitates embedding `the derived version` (and certain other build-time values) 
+As an added bonus, it also facilitates embedding `the computed version` (and certain other build-time values) 
 within your ClojureScript application, making it readily available at run-time for purposes like logging.
 
 ## The Ambient Git Context
@@ -48,30 +48,30 @@ which encodes four (hyphen separated) values which we refer to as "the ambient g
   
 ## The Two-Rule Method
 
-This middleware creates `the derived version` from these four "ambient" values by applying two rules:
-  1. when the "ahead" count is 0, and the repo is not dirty, `the derived version` will just be the latest tag (eg: `1.0.4`)
-  2. when the "ahead" count is non-zero, or the repo is dirty, `the derived version` will be the tag suffixed with `-<ahead-count>-<short-ref>-SNAPSHOT`, e.g. `1.0.4-3-g975b-SNAPSHOT`
+This middleware creates `the computed version` from these four "ambient" values by applying two rules:
+  1. when the "ahead" count is 0, and the repo is not dirty, `the computed version` will just be the latest tag (eg: `1.0.4`)
+  2. when the "ahead" count is non-zero, or the repo is dirty, `the computed version` will be the tag suffixed with `-<ahead-count>-<short-ref>-SNAPSHOT`, e.g. `1.0.4-3-g975b-SNAPSHOT`
   
- ***Note:*** the attentive reader will notice that only part of the latest tag is used (`1.0.4` rather than `version/1.0.4`). This is explained within the next section. 
+ ***Note:*** only part of the latest tag is used (`1.0.4` rather than `version/1.0.4`) which is explained in the next section. 
 
 ## The Latest Tag
 
-So far, we have said that `the derived version` is created using the "latest tag". While that's often true, it is not the whole story, which is actually as follows:
-  1. what's used is the "latest version tag" found in the commit history  (not the "latest tag")
+So far, we have said that `the computed version` is created using the "latest tag". Now, while that's often true, it is not the whole story, which is actually as follows:
+  1. what's used is the "latest version tag" found in the commit history  (not just the "latest tag")
   2. where a "version tag" is a tag with a specific textual structure
   3. that textual structure must match the regex: `#"^version\/(\d+\.\d+\.\d+)$"`
   4. so, one of these "version tags" might look like: `version/1.2.3`  (the string `version/` followed by a semver, `N.N.N`)
   5. tags which do not match the regex are ignored (which means you can use tags for other purposes, not just for nominating versions)
   6. you can override this default regex with one of your own which will recognise an alternative textual structure (see how below)
-  7. you'll notice that the regex has a capturing group which extracts the semver part (N.N.N). If you provide your own regex, it must contain one capturing group which isolates that part of the tag to be used in `the derived version`.
+  7. you'll notice that the regex has a capturing group which extracts the semver part: "N.N.N". If you provide your own regex, it must contain a single capturing group which isolates that part of the tag to be used in `the computed version`.
   
-So, this middleware will traverse backwards through the history of the current commit looking for a tag which has the right structure (matches the regex), and when it finds one, it is THAT tag which is used to create `the derived version` - it is that tag against which the "ahead count" will be calculated, etc.
+So, this middleware will traverse backwards through the history of the current commit looking for a tag which has the right structure (matches the regex), and when it finds one, it is THAT tag which is used to create `the computed version` - it is that tag against which the "ahead count" will be calculated, etc.
 
 ## Sharp Edges
   
-Some sharp edges you should be aware of:
-  - if no matching tag is found then `the derived version` will be `git-version-tag-not-found`
-  - this middleware obtains the "ambient git context" by shelling out to the `git` executable. If this executable is not in the PATH, then you'll see messages on `stderr` and `the derived version` will be `git-command-not-found`
+Please be aware of the following: 
+  - if no matching tag is found then `the computed version` will be `git-version-tag-not-found`
+  - this middleware obtains the "ambient git context" by shelling out to the `git` executable. If this executable is not in the PATH, then you'll see messages on `stderr` and `the computed version` will be `git-command-not-found`
   - this design has one potential dark/confusing side which you'll probably want to guard against: misspelling your tag. Let's say you tag with `ersion/1.2.3` (can you see the typo?) which means the regex won't match, the tag will be ignored, and an earlier version tag (one without a typo) will be used. Which is not what you intended. And that's bad. To guard against this, you'll want to add a trigger (GitHub Action ?) to  your repo to verify/assert that any tags added conform to a small set of allowable cases like `version/*` or `doc/.*`.  That way any misspelling will be flagged because the tag would fail to match an acceptable, known structure. Something like that
   - `lein release` will massage the `version` in your `defproject` in unwanted ways unless you take specific actions to stop it (see the "Example" below) 
 
@@ -83,7 +83,7 @@ As you read these three steps, keep in mind that Leiningen middleware runs
 very early in the Lein build pipeline. So early, in fact, that it can alter the `EDN` 
 of your `defproject` (within your `project.clj` file).
 
-***First***, it will create `the derived version` from the "ambient git context", using "the two-rule method" detailed above.
+***First***, it will create `the computed version` from the "ambient git context", using "the two-rule method" detailed above.
 
 ***Second***, it will perform a search and replace on the `EDN` in 
 the `defproject`.  It searches for
@@ -115,11 +115,11 @@ It will search for these strings:
 ***Note #1:*** To debug these substitutions, you can use `lein pprint` 
 to see the entire project map after the substitutions have taken place.
 
-***Note #2:***  Substitution keys are strings, even though 
-keywords seem like the idiomatic choice. Why? Reason: when you are using Cursive,
+***Note #2:***  the substitution keys are strings, even though 
+keywords seem like a more idiomatic choice. Why? Turns out that when you are using the Cursive IDE,
 the 2nd argument to `defproject` (the version!) can't be a keyword. 
 Only a string can go there because Cursive does its own inspection of your `project.clj` 
-indepentently of Lein and it doesn't work if there is a keyword there. 
+indepentently of Lein and it doesn't like a keyword there, as teh 2nd argument.
 So string keys were necessary. And there is less cognative load if there 
 is only one way to do something - so we reluctantly said "no" to allowing keyword keys too.
 
@@ -131,7 +131,7 @@ Here's how to write your `project.clj` to achieve the three steps described abov
 ```clojure
 
 ;; On the next line, note that the version (2nd argument of defproject) is a 
-;; substitution key which will be replaced by `the derived version` which is
+;; substitution key which will be replaced by `the computed version` which is
 ;; built from `the ambient git context`, using `the method`.
 (defproject day8/lein-git-inject-example "lein-git-inject/version"
   ...
@@ -148,7 +148,7 @@ Here's how to write your `project.clj` to achieve the three steps described abov
   ;; inject build-time values into your application, for later run-time use.
   ;; 
   ;; You'll notice the use of the substitution key "lein-git-inject/version".  
-  ;; At build time, this middleware will replace that keyword with `the derived version`.
+  ;; At build time, this middleware will replace that keyword with `the computed version`.
   ;; In turn, that value is used within a `:clojure-define` to bind it
   ;; to a var, via a `def` in your code (called `version` within the namespace `some.namespace`). 
   :shadow-cljs {:builds {:app {:target :browser
