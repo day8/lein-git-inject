@@ -10,7 +10,7 @@
 
 This Leiningen middleware computes "version" from the ***the ambient git context***  - specifically the branch's ***latest git tag***.
 
-Leiningen projects normally explicit provide `version` as the 2nd argument to `defproject` 
+Normally, Leiningen projects explicitly provide `version` as the 2nd argument to `defproject` 
 (within the `project.clj` file), like this: 
 ```clj
 (defproject my-app "3.4.5"    ;;  <--- "3.4.5" is the version
