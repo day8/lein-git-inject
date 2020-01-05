@@ -52,11 +52,11 @@ This middleware creates `the computed version` from these four "ambient" values 
   1. when the "ahead" count is 0, and the repo is not dirty, `the computed version` will just be the latest tag (eg: `1.0.4`)
   2. when the "ahead" count is non-zero, or the repo is dirty, `the computed version` will be the tag suffixed with `-<ahead-count>-<short-ref>-SNAPSHOT`, e.g. `1.0.4-3-g975b-SNAPSHOT`
   
- ***Note:*** only part of the latest tag is used (`1.0.4` rather than `version/1.0.4`) which is explained in the next section. 
+ ***Note:*** only part of the latest tag is used (`1.0.4` rather than `version/1.0.4`) but that's explained in the next section. 
 
 ## The Latest Tag
 
-So far, we have said that `the computed version` is created using the "latest tag". Now, while that's often true, it is not the whole story, which is actually as follows:
+So far, we have said that `the computed version` is created using the "latest tag". Now, while that is often true, it is not the whole story, which is acually as follows:
   1. what's used is the "latest version tag" found in the commit history  (not just the "latest tag")
   2. where a "version tag" is a tag with a specific textual structure
   3. by default, that textual structure must match the regex: `#"^version\/(\d+\.\d+\.\d+)$"`
@@ -72,7 +72,7 @@ So, this middleware will traverse backwards through the history of the current c
 Please be aware of the following: 
   - if no matching tag is found then `the computed version` will be `git-version-tag-not-found`
   - this middleware obtains the "ambient git context" by shelling out to the `git` executable. If this executable is not in the PATH, then you'll see messages on `stderr` and `the computed version` will be `git-command-not-found`
-  - this design has one potential dark/confusing side which you'll probably want to guard against: misspelling your tag. Let's say you tag with `ersion/1.2.3` (can you see the typo?) which means the regex won't match, the tag will be ignored, and an earlier version tag (one without a typo) will be used. Which is not what you intended. And that's bad. To guard against this, you'll want to add a trigger (GitHub Action ?) to  your repo to verify/assert that any tags added conform to a small set of allowable cases like `version/*` or `doc/.*`.  That way any misspelling will be flagged because the tag would fail to match an acceptable, known structure. Something like that
+  - this design has one potential dark/confusing side which you'll probably want to guard against: misspelling your tag. Let's say you tag with `ersion/1.2.3` (can you see the typo?) which means the regex won't match, the tag will be ignored, and an earlier version tag (one without a typo) will be used. Which is not what you intended. And that's bad. To guard against this, you'll want to add a trigger (GitHub Action ?) to your repo to verify/assert that any tags added conform to a small set of allowable cases like `version/*` or `doc/.*`.  That way, any misspelling will be flagged because the tag would fail to match an acceptable, known structure. Something like that
   - `lein release` will massage the `version` in your `defproject` in unwanted ways unless you take specific actions to stop it (see the "Example" below) 
 
 ## Three Steps
@@ -80,7 +80,7 @@ Please be aware of the following:
 The entire process has three steps, and this middleware handles the first two of them. 
 
 As you read these three steps, keep in mind that Leiningen middleware runs 
-very early in the Lein build pipeline. So early, in fact, that it can alter the `EDN` 
+very early in the Lein build pipeline. So early, that it can alter the `EDN` 
 of your `defproject` (within your `project.clj` file).
 
 ***First***, it will create `the computed version` from the "ambient git context", using "the two-rule method" detailed above.
@@ -88,9 +88,7 @@ of your `defproject` (within your `project.clj` file).
 ***Second***, it will perform a search and replace on the `EDN` in 
 the `defproject`.  It searches for
 four special strings - referred to as `substitution keys` - 
-and, when it finds one of them, it replaces that key with the associated 
-value from the build context.  In particular, it replaces any occurrence of the 
-substitution key `"lein-git-inject/version"` with the `version` constructed in step 1.
+and, when it finds one of them, it replaces that key with the associated value from the build context.  In particular, it replaces any occurrence of the substitution key `"lein-git-inject/version"` with the `version` constructed in step 1.
 
 ***Third***, if you are compiling using a tool like shadow-clj, you can use the 
 `:clojure-defines` feature to push/embed values within the 
@@ -100,7 +98,7 @@ available at run time for purposes like logging.
 
 ## The Four Substitution Keys 
 
-This middleware performs search and replace on four `substitution keys` 
+This middleware performs a search and replace on four `substitution keys` 
 within the `EDN` of your `defproject`.
 It will search for these strings:
 
@@ -112,15 +110,15 @@ It will search for these strings:
 | "lein-git-inject/build-iso-date-week" |  "2019-W47-2"               |
 | "lein-git-inject/user-name"           | "Isaac"                     |
 
-***Note #1:*** To debug these substitutions, you can use `lein pprint` 
+***Note #1:*** to debug these substitutions, I'd recommend adding the [lein-pprint plugin](https://github.com/technomancy/leiningen/tree/master/lein-pprint), so you can use `lein pprint` 
 to see the entire project map after the substitutions have taken place.
 
 ***Note #2:***  the substitution keys are strings, even though 
 keywords seem like a more idiomatic choice. Why? Turns out that when you are using the Cursive IDE,
 the 2nd argument to `defproject` (the version!) can't be a keyword. 
 Only a string can go there because Cursive does its own inspection of your `project.clj` 
-indepentently of Lein and it doesn't like a keyword there, as teh 2nd argument.
-So string keys were necessary. And there is less cognative load if there 
+independently of Lein and it doesn't like a keyword there, as the 2nd argument.
+So string keys were necessary. And there is less cognitive load if there 
 is only one way to do something - so we reluctantly said "no" to allowing keyword keys too.
 
 
