@@ -75,32 +75,24 @@ Please be aware of the following:
   - this design has one potential dark/confusing side which you'll probably want to guard against: misspelling your tag. Let's say you tag with `ersion/1.2.3` (can you see the typo?) which means the regex won't match, the tag will be ignored, and an earlier version tag (one without a typo) will be used. Which is not what you intended. And that's bad. To guard against this, you'll want to add a trigger (GitHub Action ?) to your repo to verify/assert that any tags added conform to a small set of allowable cases like `version/*` or `doc/.*`.  That way, any misspelling will be flagged because the tag would fail to match an acceptable, known structure. Something like that
   - `lein release` will massage the `version` in your `defproject` in unwanted ways unless you take specific actions to stop it (see the "Example" below) 
 
-## Three Steps
+## The Two Steps
 
-The entire process has three steps, and this middleware handles the first two of them. 
+The two-step narative presented above says this middleware proceeds in two steps:
+  1. creates `the computed version` 
+  2. replaces a placeholder string within `defproject` with `the computed version`
+  
+All true, but its a simplification. The real steps are:
+  1. this middleware computes four build-time values, of which `the computed version` is just one
+  2. this middleware will perform a search and replace on ***all the `EDN`** in 
+the `defproject`, looking for four specific, special strings and, where they are found, it will replace them with the associated computed value from step 1. 
 
-As you read these three steps, keep in mind that Leiningen middleware runs 
-very early in the Lein build pipeline. So early, that it can alter the `EDN` 
-of your `defproject` (within your `project.clj` file).
+So the special string "lein-git-inject/version" will be replaced ***anywhere*** it is found within the `defproject` EDN, and not just at argument 2 to `defproject`.
 
-***First***, it will create `the computed version` from the "ambient git context", using "the two-rule method" detailed above.
+As you think about the second step, keep in mind that Leiningen middleware runs 
+very early in the Lein build pipeline. So early, in fact, that it can alter the `EDN` 
+of your `defproject` before it is interpreted by Lein.
 
-***Second***, it will perform a search and replace on the `EDN` in 
-the `defproject`.  It searches for
-four special strings - referred to as `substitution keys` - 
-and, when it finds one of them, it replaces that key with the associated value from the build context.  In particular, it replaces any occurrence of the substitution key `"lein-git-inject/version"` with the `version` constructed in step 1.
-
-***Third***, if you are compiling using a tool like shadow-clj, you can use the 
-`:clojure-defines` feature to push/embed values within the 
-`defproject` itself into `def`s within your application, making those values 
-available at run time for purposes like logging.
-
-
-## The Four Substitution Keys 
-
-This middleware performs a search and replace on four `substitution keys` 
-within the `EDN` of your `defproject`.
-It will search for these strings:
+The four special strings - referred to as `substitution keys` - are as follows: 
 
 
 |   substituion key                    |    example replacement      |
@@ -121,6 +113,22 @@ independently of Lein and it doesn't like a keyword there, as the 2nd argument.
 So string keys were necessary. And there is less cognitive load if there 
 is only one way to do something - so we reluctantly said "no" to allowing keyword keys too.
 
+## Embedding Build-Time Values In Your App
+
+Because it can inject build-time values into `defproject`, this middleware provides us with a way
+to ultimately embed these build-time values into our ClojureScript application.
+
+Values like the `version`, or the `build datetime`, can be bound to vars within our application (think `def`), 
+and then accessed at runtime, for purposes like display and logging. This is very useful outcome. And it can 
+be achieved in a nice DRY way.
+
+How? 
+
+Well, we must embed the build-time values into certain, specific places within the `defproject` which control 
+the actions of the ClojureScript compiler so that it is instructed to embed them into our ClojureScript 
+applications and bind them to nominated `vars`. 
+  
+The technique uses the [`:closure-defines` feature](https://clojurescript.org/reference/compiler-options#closure-defines) of the ClojureScript complier. Below, the Annotated Example shows how to achive this outcome using shadow-clj.
 
 ## An Annotated Example
 
@@ -140,6 +148,7 @@ Here's how to write your `project.clj` to achieve the three steps described abov
   :middleware   [leiningen.git-inject/middleware]  ;; <-- you must include this middleware
   
   
+  ;; Embedding
   ;; If you are using the shadow-clj compiler and lein-shadow, the shadow-cljs 
   ;; configuration is put here in project.clj. Below is an example of how to 
   ;; combine this middleware with a `:clojure-define` in order to 
