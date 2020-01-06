@@ -8,24 +8,24 @@
 
 # lein-git-inject
 
-This Leiningen middleware computes "version" from the ***the ambient git context*** which is centered on the ***latest git tag***.
+Leiningen middleware which computes the "version" at build-time - from the ambient git context (think latest tagv).
 
-Normally, Leiningen projects explicitly provide `version` in the 2nd argument to `defproject` 
-like this (within the `project.clj` file): 
+Normally, Leiningen projects explicitly provide a `version` within the `project.clj` file, as the 2nd argument to `defproject` 
+like this: 
 ```clj
 (defproject my-app "3.4.5"    ;;  <--- "3.4.5" is the version
    ...)
 ```
 
-But, when using this Leiningen middleware, your `defproject` will instead contain a placeholder string, "lein-git-inject/version", at that point, like this: 
+But, when using this Leiningen middleware, your `defproject` will not contain an explicit version, and instead will contain a placeholder string, "lein-git-inject/version" like this: 
 ```clj
-(defproject my-app "lein-git-inject/version"   ;; <--- the version is a placholder string
+(defproject my-app "lein-git-inject/version"   ;; <--- the version is now a placholder string
    ...)
 ```
 
 Then, at build time, this middleware will:
    1. apply ***a two-rule method*** to compute the "version" from ***the ambient git context***. We refer to this as `the computed version`.
-   2. replace the placeholder string "lein-git-inject/version" with `the computed version`
+   2. replace the placeholder string with `the computed version`
  
 As an added bonus, it also facilitates embedding `the computed version` (and certain other build-time values) 
 within your ClojureScript application, making it readily available at run-time for purposes like logging.
