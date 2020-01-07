@@ -2,23 +2,11 @@
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
 ## [Unreleased]
-### Changed
-- Add a new arity to `make-widget-async` to provide a different widget shape.
 
-## [0.1.1] - 2019-11-18
-### Changed
-- Documentation on how to make the widgets.
+N/A
 
-### Removed
-- `make-widget-sync` - we're all async, all the time.
+## [0.7] - 2020-01-07
 
-### Fixed
-- Fixed widget maker to keep working when daylight savings switches over.
+### Breaking 
 
-## 0.1.0 - 2019-11-18
-### Added
-- Files from the new template.
-- Widget maker public API - `make-widget-sync`.
-
-[Unreleased]: https://github.com/day8/lein-git-inject/compare/0.1.1...HEAD
-[0.1.1]: https://github.com/day8/lein-git-inject/compare/0.1.0...0.1.1
+Changed the default tag structure from `version/N.N.N` to `vN.N.N`
