@@ -13,7 +13,7 @@
   "The default configuration values."
   {:git               "git"
    :describe-pattern  #"(?<tag>.*)-(?<ahead>\d+)-g(?<ref>[0-9a-f]*)(?<dirty>(-dirty)?)"
-   :version-pattern   #"version\/(\d+\.\d+\.\d+)"})
+   :version-pattern   #"v(\d+\.\d+\.\d+)"})
 
 (defmacro let-groups
   "Let for binding groups out of a j.u.r.Pattern j.u.r.Matcher."
