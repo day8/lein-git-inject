@@ -36,12 +36,12 @@ Imagine you are at the command line in a git repo, and you execute:
 ```sh
 $ git describe --tags --dirty=-dirty
 ```
-If the latest tag in your branch was `version/1.0.4`, this command might output something like:
+If the latest tag in your branch was `v1.0.4`, this command might output something like:
 ```sh
-version/1.0.4-3-g975b-dirty
+v1.0.4-3-g975b-dirty
 ```
 which encodes four (hyphen separated) values which we refer to as "the ambient git context":
-  - the latest git tag: "version/1.0.4"
+  - the latest git tag: "v1.0.4"
   - the number of commits the repo is currently "ahead" of that latest tag: "3" 
   - the short ref (SHA) for the commit referenced by that latest tag: "g975b"
   - an indication that there are uncommitted changes: "dirty"  (or absent)
@@ -52,7 +52,7 @@ This middleware creates `the computed version` from these four "ambient" values 
   1. when the "ahead" count is 0, and the repo is not dirty, `the computed version` will just be the latest tag (eg: `1.0.4`)
   2. when the "ahead" count is non-zero, or the repo is dirty, `the computed version` will be the tag suffixed with `-<ahead-count>-<short-ref>-SNAPSHOT`, e.g. `1.0.4-3-g975b-SNAPSHOT`
   
- ***Note:*** only part of the latest tag is used (just `1.0.4`, not the full string `version/1.0.4`) but that's explained in the next section. 
+ ***Note:*** only part of the latest tag is used (just `1.0.4`, not the full string `v1.0.4`) but that's explained in the next section. 
 
 ## The Latest Tag
 
