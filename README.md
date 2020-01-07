@@ -59,11 +59,11 @@ This middleware creates `the computed version` from these four "ambient" values 
 So far, we have said `the computed version` is created using the "latest tag". While that is often true, it is not the whole story, which is acually as follows:
   1. what's used is the "latest version tag" found in the commit history  ("latest version tag" vs "latest tag")
   2. where a "version tag" is a tag with a specific textual structure
-  3. by default, that textual structure must match the regex: `#"^version\/(\d+\.\d+\.\d+)$"`
-  4. so, one of these "version tags" might look like: `version/1.2.3`  (the string `"version/"` followed by a semver, `"N.N.N"`)
+  3. by default, that textual structure must match the regex: `#"^v(\d+\.\d+\.\d+)$"`
+  4. so, one of these "version tags" might look like: `v1.2.3`  (the string `"v"` followed by a semver, `"N.N.N"`)
   5. tags which do not match the regex are ignored (which means you can use tags for other purposes, not just for nominating versions)
   6. you can override this default regex with one of your own which will recognise an alternative textual structure (see how below)
-  7. you'll notice that the regex has a capturing group which extracts the semver part: "N.N.N". If you provide your own regex, it must contain a single capturing group which isolates that part of the tag to be used in `the computed version`.
+  7. you'll notice that the regex has a capturing group which extracts just the semver part: "N.N.N". If you provide your own regex, it must contain a single capturing group which isolates that part of the tag to be used in `the computed version`.
   
 So, this middleware will traverse backwards through the history of the current commit looking for a tag which has the right structure (matches the regex), and when it finds one, it is THAT tag which is used to create `the computed version` - it is that tag against which the "ahead count" will be calculated, etc.
 
@@ -72,7 +72,6 @@ So, this middleware will traverse backwards through the history of the current c
 Please be aware of the following: 
   - if no matching tag is found then `the computed version` will be `git-version-tag-not-found`
   - this middleware obtains the "ambient git context" by shelling out to the `git` executable. If this executable is not in the PATH, then you'll see messages on `stderr` and `the computed version` will be `git-command-not-found`
-  - this design has one potential dark/confusing side which you'll probably want to guard against: misspelling your tag. Let's say you tag with `ersion/1.2.3` (can you see the typo?) which means the regex won't match, the tag will be ignored, and an earlier version tag (one without a typo) will be used. Which is not what you intended. And that's bad. To guard against this, you'll want to add a trigger (GitHub Action ?) to your repo to verify/assert that any tags added conform to a small set of allowable cases like `version/*` or `doc/.*`.  That way, any misspelling will be flagged because the tag would fail to match an acceptable, known structure. Something like that
   - `lein release` will massage the `version` in your `defproject` in unwanted ways unless you take specific actions to stop it (see the "Annotated Example" below) 
 
 ## The Two Steps
@@ -82,17 +81,17 @@ The two-step narative presented above says this middleware:
   2. replaces a placeholder string within `defproject` with `the computed version`
 
 While that's true, it is a simplification. The real steps are:
-  1. this middleware computes four build-time values, of which `the computed version` is just one
+  1. this middleware computes **four** build-time values, of which `the computed version` is just one
   2. this middleware will perform a search and replace across ***all the `EDN`*** in 
 the `defproject`, looking for four special string values and, where they are found, it will replace them with the associated computed value from step 1. 
 
-So, the special string "lein-git-inject/version" will be replaced ***anywhere*** it is found within the `defproject` EDN, and not just if it appears in place of the `defproject` version argument.
+So, the special string "lein-git-inject/version" will be replaced ***anywhere*** it is found within the `defproject` EDN, and not just if it appears as the `defproject` version argument.
 
 When you consider this second step, keep in mind that Leiningen middleware runs 
 very early in the Lein build pipeline. So early, in fact, that it can alter the `EDN` 
 of your `defproject` before it is interpreted by Lein. 
 
-The four special strings supported - referred to as `substitution keys` - are as follows: 
+The four special strings supported - referred to as `substitution keys` - are: 
 
 
 |   substituion key                    |    example replacement      |
@@ -170,10 +169,10 @@ Here's how to write your `project.clj` to achieve the three steps described abov
   ;; The regex you supply has two jobs:
   ;;  1. to "match" a version tag 
   ;;  2. to return one capturing group which extracts the text within the tag which is to 
-  ;;     be used as the version. In the example below, the regex will match the tag "v/1.2.3" 
-  ;;     but it will capture the "1.2.3" part and it is THAT part which will be used as the version. 
+  ;;     be used as the version. In the example below, the regex will match the tag "version/1.2.3" 
+  ;;     but it will capture the "1.2.3" part and it is THAT part which will be used in the computed version. 
   :git-inject {
-    :version-pattern  #"^v\/(.*)$" }
+    :version-pattern  #"^version\/(.*)$" }
 )
 ```
 
