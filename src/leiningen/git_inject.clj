@@ -131,7 +131,7 @@
           (parse-describe config (string/trim out)))))))
 
 (defn git-status-to-version
-  [{:keys [version-pattern] :as config}]
+  [{:keys [version-pattern ignore-dirty?] :as config}]
   (try
     (let [{:keys [tag ahead ahead? dirty? ref-short]} (describe config)]
       (if-not (string? tag)
@@ -139,7 +139,7 @@
         "git-version-tag-not-found"
         (let [[_ version] (re-find version-pattern tag)]
           (if (and (not ahead?)
-                   (not dirty?))
+                   (or ignore-dirty? (not dirty?)))
             ;; If this is a release version:
             version
             (str version "-" ahead "-" ref-short "-SNAPSHOT")))))
