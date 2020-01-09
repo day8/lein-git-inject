@@ -47,7 +47,7 @@
                 exit child)
         (.flush *out*)
         nil)
-      (string/trim out))))
+      (first (string/split-lines (string/trim out))))))
 
 (defn parse-tags
   [config out]
