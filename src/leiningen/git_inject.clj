@@ -53,8 +53,14 @@
   [config out]
   (reduce
     (fn [ret line]
-      (if-let [[_ _ tag _] (re-find #"[0-9a-fA-F]{7} \(([^,]*, )*tag: ([0-9a-zA-Z`!@#$%&()-_+={}|;'<>,./]+)(, .*)*\) .*" line)]
-        (conj ret tag)
+      (if-let [[_ decorations] (re-find #"[0-9a-fA-F]{7} \(([^)]*)\) .*" line)]
+        (reduce
+          (fn [ret decoration]
+            (if-let [[_ tag] (re-find #"tag: ([0-9a-zA-Z`!@#$%&()-_+={}|;'<>,./]+)" decoration)]
+              (conj ret tag)
+              ret))
+          ret
+          (string/split decorations #","))
         ret))
     []
     (string/split-lines (string/trim out))))
