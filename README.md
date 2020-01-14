@@ -54,7 +54,7 @@ This middleware creates `the computed version` from these four "ambient" values 
 
 Or to ignore the dirty state of the repo you may use the following configuration:
 
-```
+```clj
 :git-inject {
   :ignore-dirty? true
 }
@@ -62,7 +62,7 @@ Or to ignore the dirty state of the repo you may use the following configuration
 
 `:ignore-dirty?` also supports using arbitrary environment variables like:
 
-```
+```clj
 :git-inject {
   ;; Will only be true if IGNORE_DIRTY environment variable is the string "true"
   :ignore-dirty? :env/ignore_dirty
@@ -179,17 +179,20 @@ Here's how to write your `project.clj` to achieve the three steps described abov
                   ["deploy"]]
 
   ;; Optional configuration 
-  ;; Here is where you can supply an alternative regex to identify `version tags`. 
-  ;; When designing your own textual structure for "version tags", remember that 
-  ;; git tags are git references and that there are rules about well formedness. 
-  ;; For example, you can't have a ":" in a tag. See https://git-scm.com/docs/git-check-ref-format
-  ;; The regex you supply has two jobs:
-  ;;  1. to "match" a version tag 
-  ;;  2. to return one capturing group which extracts the text within the tag which is to 
-  ;;     be used as the version. In the example below, the regex will match the tag "version/1.2.3" 
-  ;;     but it will capture the "1.2.3" part and it is THAT part which will be used in the computed version. 
   :git-inject {
-    :version-pattern  #"^version\/(.*)$" }
+    ;; Supply an alternative regex to identify `version tags`. 
+    ;; When designing your textual structure for "version tags", remember that 
+    ;; git tags are git references and that there are rules about well formedness. 
+    ;; For example, you can't have a ":" in a tag. See https://git-scm.com/docs/git-check-ref-format
+    ;; The regex you supply has two jobs:
+    ;;  1. to "match" a version tag 
+    ;;  2. to return one capturing group which extracts the text within the tag which is to 
+    ;;     be used as the version. In the example below, the regex will match the tag "version/1.2.3" 
+    ;;     but it will capture the "1.2.3" part and it is THAT part which will be used in the computed version. 
+    :version-pattern  #"^version\/(.*)$" 
+    
+    ;; this option is described in the "The Two Rules" section of this document
+    :ignore-dirty? true}
 )
 ```
 
