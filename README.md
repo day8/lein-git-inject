@@ -51,6 +51,23 @@ which encodes four (hyphen separated) values which we refer to as "the ambient g
 This middleware creates `the computed version` from these four "ambient" values by applying two rules:
   1. when the "ahead" count is 0, and the repo is not dirty, `the computed version` will just be the latest tag (eg: `1.0.4`)
   2. when the "ahead" count is non-zero, or the repo is dirty, `the computed version` will be the tag suffixed with `-<ahead-count>-<short-ref>-SNAPSHOT`, e.g. `1.0.4-3-g975b-SNAPSHOT`
+
+Or to ignore the dirty state of the repo you may use the following configuration:
+
+```
+:git-inject {
+  :ignore-dirty? true
+}
+```
+
+`:ignore-dirty?` also supports using arbitrary environment variables like:
+
+```
+:git-inject {
+  ;; Will only be true if IGNORE_DIRTY environment variable is the string "true"
+  :ignore-dirty? :env/ignore_dirty
+}
+```
   
  ***Note:*** only part of the latest tag is used (just `1.0.4`, not the full string `v1.0.4`) but that's explained in the next section. 
 
