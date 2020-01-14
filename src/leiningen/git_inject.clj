@@ -139,13 +139,16 @@
 (defn git-status-to-version
   [{:keys [version-pattern ignore-dirty?] :as config}]
   (try
-    (let [{:keys [tag ahead ahead? dirty? ref-short]} (describe config)]
+    (let [{:keys [tag ahead ahead? dirty? ref-short]} (describe config)
+          ignore-dirty?' (if (and (keyword? ignore-dirty?)
+                                  (= (namespace ignore-dirty?) "env"))
+                           (= "true" (System/getenv (string/upper-case (name ignore-dirty?)))))]
       (if-not (string? tag)
         ;; If git status is nil (e.g. IntelliJ evaluating project.clj):
         "git-version-tag-not-found"
         (let [[_ version] (re-find version-pattern tag)]
           (if (and (not ahead?)
-                   (or ignore-dirty? (not dirty?)))
+                   (or ignore-dirty?' (not dirty?)))
             ;; If this is a release version:
             version
             (str version "-" ahead "-" ref-short "-SNAPSHOT")))))
