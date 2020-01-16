@@ -52,24 +52,9 @@ This middleware creates `the computed version` from these four "ambient" values 
   1. when the "ahead" count is 0, and the repo is not dirty, `the computed version` will just be the latest tag (eg: `1.0.4`)
   2. when the "ahead" count is non-zero, or the repo is dirty, `the computed version` will be the tag suffixed with `-<ahead-count>-<short-ref>-SNAPSHOT`, e.g. `1.0.4-3-g975b-SNAPSHOT`
 
-Or to ignore the dirty state of the repo you may use the following configuration:
+***Note #1:*** there is a configuration option to ignore `dirty` state. See the Configuration section below.
 
-```clj
-:git-inject {
-  :ignore-dirty? true
-}
-```
-
-`:ignore-dirty?` also supports using arbitrary environment variables like:
-
-```clj
-:git-inject {
-  ;; Will only be true if IGNORE_DIRTY environment variable is the string "true"
-  :ignore-dirty? :env/ignore_dirty
-}
-```
-  
- ***Note:*** only part of the latest tag is used (just `1.0.4`, not the full string `v1.0.4`) but that's explained in the next section. 
+***Note #2:*** only part of the latest tag is used (just `1.0.4`, not the full string `v1.0.4`) but that's explained in the next section. 
 
 ## The Latest Tag
 
@@ -139,8 +124,70 @@ be achieved in an automated, DRY way.
 The trick is to place the substitution keys into specific places within the `defproject` - ones which control 
 the actions of the ClojureScript compiler. We want to take advantage of the [`:closure-defines` feature](https://clojurescript.org/reference/compiler-options#closure-defines) feature of the ClojureScript complier which permits us to "set" values for `defs` at compile time.
 
-Below, the Annotated Example demonstrates how to achive this outcome using shadow-clj.
+Below, the Annotated Example section demonstrates how to achive this outcome using shadow-clj.
 
+
+## Configuration
+
+A map of configuration options can, optionally, be added to `defproject` via the key `:git-inject`, like this:
+
+```clj
+(defproject ....
+
+   :git-inject   { ... }   ;; a map of configuration options
+
+   )
+```
+
+The two configuration options are:
+  -  `:ignore-dirty?` 
+  -  `:version-pattern` 
+  
+#### :ignore-dirty?
+
+A boolean value which specifies if the dirty state of the repo should be ignored when calculating the version. 
+
+Defaults to `false`.
+
+Can be supplied as an explicit boolean or via an environment variable as the string "true" or "false".
+
+```clj
+:git-inject {
+  :ignore-dirty? true
+}
+```
+OR
+```clj
+:git-inject {
+  ;; Will only be true if IGNORE_DIRTY environment variable is the string "true"
+  ;; If the environment variable is not found, defaults to "false"
+  :ignore-dirty? :env/ignore_dirty
+}
+```
+
+#### :version-pattern
+
+A regex which is used to differentiate between `version tags` and other `tags`. If this regex
+matches, then the tag is assumed to be a `version tag`, otherwise the tag will be ignored. 
+
+Defaults to `#"^v(\d+\.\d+\.\d+)$"`
+
+When designing the textual structure for your "version tags", remember that 
+git tags are git references and that there are rules about well formedness. 
+For example, you can't have a ":" in a tag. See https://git-scm.com/docs/git-check-ref-format
+
+The regex you supply has two jobs:
+  1. to "match" version tags 
+  2. to return one capturing group which extracts the text within the tag which is to 
+     be used as the version itself. In the example below, the regex will match the tag "version/1.2.3" 
+     but it will also capture the "1.2.3" part and it is THAT part which will be used in the computed version. 
+    
+```clj
+:git-inject {
+  :version-pattern  #"^version\/(.*)$" 
+}
+```
+  
 ## An Annotated Example
 
 Here's how to write your `project.clj` to achieve the three steps described above...
@@ -180,18 +227,7 @@ Here's how to write your `project.clj` to achieve the three steps described abov
 
   ;; Optional configuration 
   :git-inject {
-    ;; Supply an alternative regex to identify `version tags`. 
-    ;; When designing your textual structure for "version tags", remember that 
-    ;; git tags are git references and that there are rules about well formedness. 
-    ;; For example, you can't have a ":" in a tag. See https://git-scm.com/docs/git-check-ref-format
-    ;; The regex you supply has two jobs:
-    ;;  1. to "match" a version tag 
-    ;;  2. to return one capturing group which extracts the text within the tag which is to 
-    ;;     be used as the version. In the example below, the regex will match the tag "version/1.2.3" 
-    ;;     but it will capture the "1.2.3" part and it is THAT part which will be used in the computed version. 
     :version-pattern  #"^version\/(.*)$" 
-    
-    ;; this option is described in the "The Two Rules" section of this document
     :ignore-dirty? true}
 )
 ```
