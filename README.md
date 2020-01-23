@@ -190,13 +190,13 @@ The regex you supply has two jobs:
   
 ## An Annotated Example
 
-Here's how to write your `project.clj` to achieve the three steps described above...
+Here's how to write your `project.clj` ... 
 
 ```clojure
 
 ;; On the next line, note that the version (2nd argument of defproject) is a 
-;; substitution key which will be replaced by `the computed version` which is
-;; built from `the ambient git context`, using `the method`.
+;; `Substitution Key` which will be replaced by `the computed version` which is
+;; built from `The Ambient Git Context`, using `The Two-Rule Method`.
 (defproject day8/lein-git-inject-example "lein-git-inject/version"
   ...
 
@@ -225,7 +225,7 @@ Here's how to write your `project.clj` to achieve the three steps described abov
   :release-tasks [["vcs" "assert-committed"]
                   ["deploy"]]
 
-  ;; Optional configuration 
+  ;; Optional - see the `Configuration` section for explanation
   :git-inject {
     :version-pattern  #"^version\/(.*)$" 
     :ignore-dirty? true}
