@@ -96,12 +96,12 @@ of your `defproject` before it is interpreted by Lein.
 The four special strings supported - referred to as `substitution keys` - are: 
 
 
-|   substituion key                    |    example replacement      |
-|--------------------------------------|-----------------------------|
-| "lein-git-inject/version"             |  "12.4.1-2-453a730-SNAPSHOT"                    |
-| "lein-git-inject/build-iso-date-time" |  "2019-11-18T00:05:02.273361"  |      
-| "lein-git-inject/build-iso-date-week" |  "2019-W47-2"               |
-| "lein-git-inject/user-name"           | "Isaac"                     |
+|   substitution key                    |    example replacement       |
+|---------------------------------------|------------------------------|
+| "lein-git-inject/version"             |  "12.4.1-2-453a730-SNAPSHOT" |
+| "lein-git-inject/build-iso-date-time" |  "2019-11-18T00:05:02.273361"|      
+| "lein-git-inject/build-iso-date-week" |  "2019-W47-2"                |
+| "lein-git-inject/user-name"           | "Isaac"                      |
 
 ***Note #1:*** to debug these substitutions, I'd recommend adding the [lein-pprint plugin](https://github.com/technomancy/leiningen/tree/master/lein-pprint), so you can use `lein pprint` 
 to see the entire project map after the substitutions have taken place.
