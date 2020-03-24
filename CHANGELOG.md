@@ -3,6 +3,10 @@ All notable changes to this project will be documented in this file. This change
 
 ## [Unreleased]
 
+#### Fixed
+
+- Fix default version pattern by anchoring to start and end of string
+
 ## [0.0.11] - 2020-01-15
 
 #### Added
