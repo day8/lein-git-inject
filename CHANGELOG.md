@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file. This change
 
 #### Fixed
 
+- Fix ignore-dirty? flag boolean values. See [#3](https://github.com/day8/lein-git-inject/issues/3).
+
+## [0.0.12] - 2020-03-24
+
+#### Fixed
+
 - Fix default version pattern by anchoring to start and end of string
 
 ## [0.0.11] - 2020-01-15
