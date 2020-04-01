@@ -200,7 +200,7 @@ Here's how to write your `project.clj` ...
 (defproject day8/lein-git-inject-example "lein-git-inject/version"
   ...
 
-  :plugins      [[day8/lein-git-inject "0.0.5"]   ;; <--- you must include this plugin
+  :plugins      [[day8/lein-git-inject "0.0.13"]   ;; <--- you must include this plugin
                  [lein-shadow          "0.1.7"]]
 
   :middleware   [leiningen.git-inject/middleware]  ;; <-- you must include this middleware
