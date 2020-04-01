@@ -3,6 +3,8 @@ All notable changes to this project will be documented in this file. This change
 
 ## [Unreleased]
 
+## [0.0.13] - 2020-04-01
+
 #### Fixed
 
 - Fix ignore-dirty? flag boolean values. See [#3](https://github.com/day8/lein-git-inject/issues/3).
