@@ -3,6 +3,12 @@ All notable changes to this project will be documented in this file. This change
 
 ## [Unreleased]
 
+#### Fixed
+
+- Fix compatibility with leiningen versions older than 2.9.0. 0.0.13 introduced
+  a regression in older leiningen versions by using clojure.core/boolean? which
+  is only available from Clojure 1.9 and leiningen 2.9.0 onwards.
+
 ## [0.0.13] - 2020-04-01
 
 #### Fixed

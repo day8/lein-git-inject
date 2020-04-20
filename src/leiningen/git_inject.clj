@@ -7,7 +7,8 @@
   (:import
     (java.io BufferedReader StringReader IOException)
     (java.time LocalDateTime)
-    (java.time.format DateTimeFormatter)))
+    (java.time.format DateTimeFormatter))
+  (:refer-clojure :exclude [boolean?]))
 
 (def default-config
   "The default configuration values."
@@ -25,6 +26,12 @@
                      (for [b bindings]
                        `[~b (.group ~s ~(name b))]))]
        ~@body)))
+
+;; Duplicate of clojure.core/boolean? as it is only available in Clojure 1.9+
+;; which causes leiningen versions lower than 2.9.0 to fail.
+(defn boolean?
+  "Return true if x is a Boolean"
+  [x] (instance? Boolean x))
 
 (defn ensure-pattern
   "Given a string, compiles it to a java.util.regex.Pattern."
