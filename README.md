@@ -1,7 +1,7 @@
 <!-- [![CI](https://github.com/day8/lein-git-inject/workflows/ci/badge.svg)](https://github.com/day8/lein-git-inject/actions?workflow=ci)
 [![CD](https://github.com/day8/lein-git-inject/workflows/cd/badge.svg)](https://github.com/day8/lein-git-inject/actions?workflow=cd)
 [![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/day8/lein-git-inject?style=flat)](https://github.com/day8/lein-git-inject/tags) -->
-[![Clojars Project](https://img.shields.io/clojars/v/day8/lein-git-inject?stye=for-the-badge&logo=clojure&logoColor=fff)](https://clojars.org/day8/lein-git-inject)
+[![Clojars Project](https://img.shields.io/clojars/v/day8/lein-git-inject?style=for-the-badge&logo=clojure&logoColor=fff)](https://clojars.org/day8/lein-git-inject)
 [![GitHub issues](https://img.shields.io/github/issues-raw/day8/lein-git-inject?style=for-the-badge&logo=github)](https://github.com/day8/lein-git-inject/issues)
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/day8/lein-git-inject?style=for-the-badge&logo=github)](https://github.com/day8/lein-git-inject/pulls)
 [![License](https://img.shields.io/github/license/day8/lein-git-inject?style=for-the-badge)](LICENSE)
