@@ -170,10 +170,23 @@
       ;; If git binary is not available (e.g. not in path):
       "git-command-not-found")))
 
+(defn git-sha
+  [{:keys [git sha-length] :as config
+    :or {sha-length 8}}]
+  (let [{:keys [exit out] :as child} (apply sh [git "rev-parse" (str "--short=" sha-length) "HEAD"])]
+    (if-not (= exit 0)
+      (binding [*out* *err*]
+        (printf "Warning: lein-git-inject git exited %d\n%s\n\n"
+                exit child)
+        (.flush *out*)
+        nil)
+      (string/trim-newline out))))
+
 (def x->f
   {:lein-git-inject/build-iso-date-time (fn [_] (.format (LocalDateTime/now) DateTimeFormatter/ISO_DATE_TIME))
    :lein-git-inject/build-iso-week-date (fn [_] (.format (LocalDateTime/now) DateTimeFormatter/ISO_WEEK_DATE))
    :lein-git-inject/version             git-status-to-version
+   :lein-git-inject/sha                 git-sha
    :lein-git-inject/username            (fn [_] (System/getProperty "user.name"))})
 
 (defn middleware

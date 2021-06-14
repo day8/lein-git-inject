@@ -100,6 +100,7 @@ The four special strings supported - referred to as `substitution keys` - are:
 |   substitution key                    |    example replacement       |
 |---------------------------------------|------------------------------|
 | "lein-git-inject/version"             |  "12.4.1-2-453a730-SNAPSHOT" |
+| "lein-git-inject/sha"                 |  "d7b932f7"                  |
 | "lein-git-inject/build-iso-date-time" |  "2019-11-18T00:05:02.273361"|      
 | "lein-git-inject/build-iso-date-week" |  "2019-W47-2"                |
 | "lein-git-inject/user-name"           | "Isaac"                      |
@@ -143,6 +144,7 @@ A map of configuration options can, optionally, be added to `defproject` via the
 The two configuration options are:
   -  `:ignore-dirty?` 
   -  `:version-pattern` 
+  -  `:sha-length`
   
 #### :ignore-dirty?
 
@@ -188,7 +190,11 @@ The regex you supply has two jobs:
   :version-pattern  #"^version\/(.*)$" 
 }
 ```
-  
+
+#### :sha-length
+
+An integer which specifies the length of the output git SHA used when replacing `"lein-git-inject/sha".
+
 ## An Annotated Example
 
 Here's how to write your `project.clj` ... 
