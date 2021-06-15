@@ -3,6 +3,15 @@ All notable changes to this project will be documented in this file. This change
 
 ## [Unreleased]
 
+## [0.0.15] - 2021-06-15
+
+#### Added
+
+- Add `lein-git-inject/sha` with configurable `:sha-length`. See [#4](https://github.com/day8/lein-git-inject/pull/4).
+  Thanks to [@Quezion](https://github.com/Quezion).
+
+## [0.0.14] - 2020-04-21
+
 #### Fixed
 
 - Fix compatibility with leiningen versions older than 2.9.0. 0.0.13 introduced
