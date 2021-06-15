@@ -141,7 +141,7 @@ A map of configuration options can, optionally, be added to `defproject` via the
    )
 ```
 
-The two configuration options are:
+The three configuration options are:
   -  `:ignore-dirty?` 
   -  `:version-pattern` 
   -  `:sha-length`
