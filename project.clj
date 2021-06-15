@@ -16,4 +16,4 @@
   :deploy-repositories [["clojars" {:sign-releases false
                                     :url           "https://clojars.org/repo"
                                     :username      :env/CLOJARS_USERNAME
-                                    :password      :env/CLOJARS_PASSWORD}]])
+                                    :password      :env/CLOJARS_TOKEN}]])

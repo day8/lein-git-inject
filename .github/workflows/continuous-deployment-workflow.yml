@@ -66,7 +66,7 @@ jobs:
         if: steps.maven-cache.outputs.cache-hit != 'true'
         env:
           CLOJARS_USERNAME: ${{ secrets.CLOJARS_USERNAME }}
-          CLOJARS_PASSWORD: ${{ secrets.CLOJARS_PASSWORD }}
+          CLOJARS_TOKEN: ${{ secrets.CLOJARS_TOKEN }}
           GITHUB_USERNAME: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -75,7 +75,7 @@ jobs:
         if: steps.maven-cache.outputs.cache-hit == 'true'
         env:
           CLOJARS_USERNAME: ${{ secrets.CLOJARS_USERNAME }}
-          CLOJARS_PASSWORD: ${{ secrets.CLOJARS_PASSWORD }}
+          CLOJARS_TOKEN: ${{ secrets.CLOJARS_TOKEN }}
           GITHUB_USERNAME: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
