@@ -3,7 +3,8 @@
     [clojure.walk :as walk]
     [clojure.string :as string]
     [clojure.java.shell :refer [sh]]
-    [clojure.java.io :as io])
+    [clojure.java.io :as io]
+    [leiningen.core.main :as lein])
   (:import
     (java.io BufferedReader StringReader IOException)
     (java.time LocalDateTime)
@@ -49,11 +50,7 @@
   [{:keys [git] :as config}]
   (let [{:keys [exit out] :as child} (apply sh [git "rev-list" "--max-parents=0" "HEAD"])]
     (if-not (= exit 0)
-      (binding [*out* *err*]
-        (printf "Warning: lein-git-inject git exited %d\n%s\n\n"
-                exit child)
-        (.flush *out*)
-        nil)
+      (lein/warn (format "Warning: lein-git-inject git exited %d\n%s\n" exit child))
       (first (string/split-lines (string/trim out))))))
 
 (defn parse-tags
@@ -76,11 +73,7 @@
   [{:keys [git] :as config}]
   (let [{:keys [exit out] :as child} (apply sh [git "log" "--oneline" "--decorate" "--simplify-by-decoration" "--ancestry-path" (str (initial-commit config) "..HEAD")])]
     (if-not (= exit 0)
-      (binding [*out* *err*]
-        (printf "Warning: lein-git-inject git exited %d\n%s\n\n"
-                exit child)
-        (.flush *out*)
-        nil)
+      (lein/warn (format "Warning: lein-git-inject git exited %d\n%s\n" exit child))
       (parse-tags config out))))
 
 (defn latest-version-tag
@@ -93,11 +86,8 @@
   [{:keys [git] :as config} ref]
   (let [{:keys [exit out] :as child} (apply sh [git "rev-parse" "--verify" ref])]
     (if-not (= exit 0)
-      (binding [*out* *err*]
-        (printf "Warning: lein-git-inject git exited %d\n%s\n\n"
-                exit child)
-        (.flush *out*)
-        nil)
+      (lein/warn "Warning: lein-git-inject git exited %d\n%s\n\n"
+              exit child)
       (string/trim out))))
 
 (defn parse-describe
@@ -109,11 +99,9 @@
   (let [pattern (ensure-pattern describe-pattern ":describe-pattern")
         matcher (re-matcher pattern out)]
     (if-not (.matches matcher)
-      (do (binding [*out* *err*]
-            (printf (str "Warning: lein-git-inject couldn't match the current repo status:\n%s\n\n"
-                         "Against pattern:\n%s\n\n")
-                    (pr-str out) pattern)
-            (.flush *out*))
+      (do (lein/warn (format (str "Warning: lein-git-inject couldn't match the current repo status:\n%s\n\n"
+                                  "Against pattern:\n%s\n")
+                             (pr-str out) pattern))
           {})
       (let-groups [[tag ahead ref dirty] matcher]
                   {:tag       tag
@@ -136,10 +124,8 @@
       {}
       (let [{:keys [exit out] :as child} (apply sh [git "describe" "--tags" "--dirty" "--long" "--match" version-tag])]
         (if-not (= exit 0)
-          (binding [*out* *err*]
-            (printf "Warning: lein-git-inject git exited %d\n%s\n\n"
-                    exit child)
-            (.flush *out*)
+          (do
+            (lein/warn (format "Warning: lein-git-inject git exited %d\n%s\n" exit child))
             {})
           (parse-describe config (string/trim out)))))))
 
@@ -175,11 +161,7 @@
     :or {sha-length 8}}]
   (let [{:keys [exit out] :as child} (apply sh [git "rev-parse" (str "--short=" sha-length) "HEAD"])]
     (if-not (= exit 0)
-      (binding [*out* *err*]
-        (printf "Warning: lein-git-inject git exited %d\n%s\n\n"
-                exit child)
-        (.flush *out*)
-        nil)
+      (lein/warn (format "Warning: lein-git-inject git exited %d\n%s\n" exit child))
       (string/trim-newline out))))
 
 (def x->f
